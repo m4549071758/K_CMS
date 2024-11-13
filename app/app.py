@@ -7,6 +7,7 @@ from hashlib import sha256
 from uuid_extensions import uuid7str
 from models.models import db_session
 from werkzeug.middleware.proxy_fix import ProxyFix
+from datetime import timedelta
 import secrets
 
 app = Flask(__name__)
