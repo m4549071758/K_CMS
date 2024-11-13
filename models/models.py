@@ -2,6 +2,7 @@ from models.db_config import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD
 from sqlalchemy import create_engine
 from sqlalchemy_utils import UUIDType
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import scoped_session, sessionmaker, relationship
 import os
 
 engine = create_engine(f"mysql+mysqlconnector://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}?charset=utf8mb4&collation=utf8mb4_general_ci", pool_size=50, max_overflow=20, echo=False) # echoは運用時Falseにする
