@@ -1,0 +1,15 @@
+PING
+---
+tags:
+  - Test
+summary: 疎通チェック
+description: アクセスするとpongが返ります
+responses:
+  200:
+    description: OK
+    schema:
+      type: object
+      properties:
+        message:
+          type: string
+          example: pong

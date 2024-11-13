@@ -29,3 +29,9 @@ app.config["SWAGGER"] = {
     "version": "0.0.1",
 }
 swagger = Swagger(app)
+
+# テストAPI
+@app.route(f"{URL_PREFIX}/ping", methods=["GET"])
+@swag_from("swagger_yaml/ping.yml")
+def ping():
+    return jsonify({"message": "pong"})
