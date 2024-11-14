@@ -4,7 +4,6 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identi
 from hashlib import sha256
 from flasgger import swag_from
 from uuid_extensions import uuid7str
-from datetime import datetime
 import secrets
 
 
