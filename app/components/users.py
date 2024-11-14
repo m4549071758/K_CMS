@@ -39,7 +39,7 @@ def user_register():
 
     return jsonify({"status": "success", "access_token": access_token, "username": username}), 201
 
-@users.route(f"{URL_PREFIX}/users/update")
+@users.route(f"{URL_PREFIX}/users/update", methods=["PATCH"])
 @jwt_required
 @swag_from("../swagger_yaml/users_update.yml")
 def user_update():
@@ -73,6 +73,25 @@ def user_update():
         return jsonify({"status": "error", "reason": "target is invalid"}), 400
     
     try:
+        db_session.commit()
+    except Exception as e:
+        db_session.rollback()
+        return jsonify({"status": "error", "reason": str(e)}), 500
+    finally:
+        db_session.close()
+
+@users.route(f"{URL_PREFIX}/users/delete", methods=["DELETE"])
+@jwt_required
+@swag_from("../swagger_yaml/users_delete.yml")
+def user_delete():
+    current_user = get_jwt_identity()
+    
+    user_query = Users.query.filter_by(id=current_user).first()
+    if not user_query:
+        return jsonify({"status": "error", "reason": "user not found"}), 404
+    
+    try:
+        db_session.delete(user_query)
         db_session.commit()
     except Exception as e:
         db_session.rollback()
