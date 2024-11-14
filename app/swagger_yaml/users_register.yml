@@ -1,0 +1,53 @@
+ユーザー登録
+---
+tags:
+  - Users
+summary: ユーザー登録
+description: ユーザーを登録する
+parameters:
+  - name: body
+    in: body
+    required: true
+    schema:
+      type: object
+      properties:
+        username:
+          type: string
+          example: "test_user"
+        password:
+          type: string
+          example: "password"
+responses:
+  201:
+    description: OK
+    schema:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "success"
+        access_token:
+          type: string
+          example: "eyJhbGci ... 9Ij4"
+  400:
+    description: Bad Request
+    schema:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "error"
+        message:
+          type: string
+          example: "Username is already exist"
+  500:
+    description: Internal Server Error
+    schema:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "error"
+        message:
+          type: string
+          example: "Internal Server Error"

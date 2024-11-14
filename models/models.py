@@ -25,10 +25,15 @@ class Users(Base):
     username = Column(VARCHAR(32), unique=True, nullable=False)
     hashed_password = Column(CHAR(64), nullable=False)
     salt = Column(CHAR(64), nullable=False)
-    account_type = Column(CHAR(5), nullable=False)
     createdAt = Column(DATETIME, default=datetime.now())
     updatedAt = Column(DATETIME, default=datetime.now(), onupdate=datetime.now())
     posts = relationship("Posts", backref="user", cascade="all, delete-orphan")
+
+    def __init__(self, id, username, hashed_password, salt):
+        self.id = id
+        self.username = username
+        self.hashed_password = hashed_password
+        self.salt = salt
 
 class Posts(Base):
     __tablename__ = "posts"
