@@ -8,11 +8,13 @@ from uuid_extensions import uuid7str
 from models.models import db_session, Posts, Users
 from werkzeug.middleware.proxy_fix import ProxyFix
 from datetime import timedelta
+from app.components import users
 import secrets
 import os
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(24)
+app.register_blueprint(users.users)
 
 URL_PREFIX = "/api"
 
