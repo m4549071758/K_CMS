@@ -1,0 +1,78 @@
+NEW POST
+---
+tags:
+  - Posts
+summary: 新規投稿
+description: 新規投稿を行います
+parameters:
+  - name: Authorization
+    in: header
+    description: アクセストークン
+    required: true
+    type: string
+  - name: body
+    in: body
+    description: 投稿内容
+    required: true
+    schema:
+      type: object
+      properties:
+        title:
+          type: string
+          example: 記事1
+        excerpt:
+          type: string
+          example: これは記事1です
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["tag1", "tag2"]
+        date:
+          type: string
+          example: 2019-01-01
+        markdown:
+          type: string
+          example: "## 記事1\nこれは記事1です"
+responses:
+  201:
+    description: OK
+    schema:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+  401:
+    description: Unauthorized
+    schema:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        message:
+          type: string
+          example: Unauthorized
+  400:
+    description: Bad Request
+    schema:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        message:
+          type: string
+          example: Bad Request
+  500:
+    description: Internal Server Error
+    schema:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        message:
+          type: string
+          example: Internal Server Error
