@@ -24,7 +24,7 @@ def user_register():
     
     id = uuid7str()
     salt = secrets.token_hex(32)
-    hashed_password = sha256((username + password + salt).encode("UTF-8")).hexdigest()
+    hashed_password = sha256((id + password + salt).encode("UTF-8")).hexdigest()
 
     try:
         user = Users(id=id, username=username, hashed_password=hashed_password, salt=salt)
@@ -38,3 +38,44 @@ def user_register():
         db_session.close()
 
     return jsonify({"status": "success", "access_token": access_token, "username": username}), 201
+
+@users.route(f"{URL_PREFIX}/users/update")
+@jwt_required
+@swag_from("../swagger_yaml/users_update.yml")
+def user_update():
+    current_user = get_jwt_identity()
+    data = request.json
+
+    target = data["target"]
+    
+    if target == "username":
+        new_username = data["new_username"]
+        user_query = Users.query.filter_by(username = new_username).first()
+        if user_query:
+            return jsonify({"status": "error", "reason": "username already exists"}), 400
+        current_user_query = Users.query.filter_by(id = current_user).first()
+        current_user_query.username = new_username
+    elif target == "password":
+        current_password = data["current_password"]
+        new_password = data["new_password"]
+
+        current_user_query = Users.query.filter_by(id = current_user).first()
+
+        current_hashed_password = sha256((current_user_query.id + current_password + current_user_query.salt).encode("UTF-8")).hexdigest()
+        if current_hashed_password != current_user_query.hashed_password:
+            return jsonify({"status": "error", "reason": "current password is incorrect"}), 400
+        
+        salt = secrets.token_hex(32)
+        hashed_password = sha256((current_user_query.id + new_password + salt).encode("UTF-8")).hexdigest()
+        current_user_query.hashed_password = hashed_password
+        current_user_query.salt = salt
+    else:
+        return jsonify({"status": "error", "reason": "target is invalid"}), 400
+    
+    try:
+        db_session.commit()
+    except Exception as e:
+        db_session.rollback()
+        return jsonify({"status": "error", "reason": str(e)}), 500
+    finally:
+        db_session.close()
