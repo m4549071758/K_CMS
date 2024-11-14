@@ -1,0 +1,70 @@
+ユーザー情報更新
+---
+tags:
+  - Users
+summary: ユーザー情報を更新する
+description: ユーザー情報を更新する
+parameters:
+  - name: Authorization
+    in: header
+    description: アクセストークン
+    required: true
+    type: string
+  - name: body
+    in: body
+    description: ユーザー情報
+    required: true
+    schema:
+      type: object
+      properties:
+        target:
+          type: string
+          example: username
+        username:
+          type: string
+          example: user1
+        password:
+          type: string
+          example: password
+responses:
+  200:
+    description: OK
+    schema:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+  400:
+    description: Bad Request
+    schema:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        message:
+          type: string
+          example: Bad Request
+  401:
+    description: Unauthorized
+    schema:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        message:
+          type: string
+          example: Unauthorized
+  500:
+    description: Internal Server Error
+    schema:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        message:
+          type: string
+          example: Internal Server Error

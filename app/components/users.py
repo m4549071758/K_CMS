@@ -50,16 +50,16 @@ def user_update():
     
     if target == "username":
         new_username = data["new_username"]
-        user_query = Users.query.filter_by(username = new_username).first()
+        user_query = Users.query.filter_by(username=new_username).first()
         if user_query:
             return jsonify({"status": "error", "reason": "username already exists"}), 400
-        current_user_query = Users.query.filter_by(id = current_user).first()
+        current_user_query = Users.query.filter_by(id=current_user).first()
         current_user_query.username = new_username
     elif target == "password":
         current_password = data["current_password"]
         new_password = data["new_password"]
 
-        current_user_query = Users.query.filter_by(id = current_user).first()
+        current_user_query = Users.query.filter_by(id=current_user).first()
 
         current_hashed_password = sha256((current_user_query.id + current_password + current_user_query.salt).encode("UTF-8")).hexdigest()
         if current_hashed_password != current_user_query.hashed_password:
