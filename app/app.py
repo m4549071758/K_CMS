@@ -1,11 +1,11 @@
 from flask import Flask, request, jsonify
-from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, jwt_required, create_refresh_token
+from flask_jwt_extended import JWTManager, get_jwt_identity, jwt_required
 from flask_json import FlaskJSON
 from flasgger import Swagger
 from flasgger.utils import swag_from
 from hashlib import sha256
 from uuid_extensions import uuid7str
-from models.models import db_session, Posts, Users
+from models.models import db_session, Posts
 from werkzeug.middleware.proxy_fix import ProxyFix
 from datetime import timedelta
 from app.components import users
