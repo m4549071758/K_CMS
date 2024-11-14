@@ -30,7 +30,7 @@ app.config["JSON_AS_ASCII"] = False
 app.config["SWAGGER"] = {
     "title": "ヘッドレスCMS API",
     "uiversion": 3,
-    "version": "0.0.1",
+    "version": "1.2.4",
 }
 swagger = Swagger(app)
 
