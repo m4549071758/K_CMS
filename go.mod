@@ -1,7 +1,6 @@
 module k-cms
 
-go 1.24.1
-
+go 1.22.9
 require (
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
