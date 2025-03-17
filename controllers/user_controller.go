@@ -20,16 +20,17 @@ func GetUsers(c *gin.Context) {
 
 func GetUser(c *gin.Context) {
 	id := c.Param("id")
+
 	var user models.User
 
-	if err := config.DB.First(&user, id).Error; err != nil {
+	// プレースホルダを使用してパラメータ化クエリを実行
+	if err := config.DB.Where("id = ?", id).First(&user).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
 
 	c.JSON(http.StatusOK, user)
 }
-
 func CreateUser(c *gin.Context) {
 	var input RegisterInput
 	if err := c.ShouldBindBodyWithJSON(&input); err != nil {
