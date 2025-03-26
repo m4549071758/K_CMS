@@ -30,16 +30,16 @@ func GetArticles(c *gin.Context) {
 }
 
 func GetArticle(c *gin.Context) {
-	var Article models.Article
+	var article models.Article
 	// パスパラメータから記事idを取得
 	id := c.Param("id")
 
-	if err := config.DB.Where("id = ?", id).First(&Article).Error; err != nil {
+	if err := config.DB.Where("id = ?", id).First(&article).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Article not found"})
 		return
 	}
 
-	c.JSON(http.StatusOK, Article)
+	c.JSON(http.StatusOK, article)
 }
 
 func AddArticle(c *gin.Context) {
