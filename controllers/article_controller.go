@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"k-cms/config"
+	"k-cms/middlewares"
 	"k-cms/models"
 	"net/http"
 
@@ -50,6 +51,12 @@ func AddArticle(c *gin.Context) {
 		return
 	}
 
+	userUUID, err := middlewares.GetUserIDFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
 	article := models.Article{
 		Title:         input.Title,
 		Excerpt:       input.Excerpt,
@@ -58,6 +65,7 @@ func AddArticle(c *gin.Context) {
 		Tags:          models.StringArray(input.Tags), // 直接StringArrayに変換
 		Datetime:      input.Datetime,
 		Content:       input.Content,
+		UserID:        userUUID,
 	}
 
 	if err := config.DB.Create(&article).Error; err != nil {
@@ -65,5 +73,6 @@ func AddArticle(c *gin.Context) {
 		return
 	}
 
+	config.DB.Preload("User").First(&article, article.ID)
 	c.JSON(http.StatusCreated, article)
 }

@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"errors"
 	"k-cms/config"
 	"k-cms/models"
 	"net/http"
@@ -62,6 +63,8 @@ func AuthMiddleware() gin.HandlerFunc {
 				return
 			}
 
+			// ここでリクエスト処理前にContextに対して"user_id"と"user"をセット
+			// リクエスト処理中にこれらの値を取得できるようになる
 			c.Set("user_id", userID)
 			c.Set("user", user)
 			c.Next()
@@ -71,4 +74,35 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 	}
+}
+
+func GetUserIDFromContext(c *gin.Context) (uuid.UUID, error) {
+	// コンテキストからユーザーIDを取得
+	userID, exists := c.Get("user_id")
+	if !exists {
+		return uuid.Nil, errors.New("user not authenticated")
+	}
+
+	userUUID, ok := userID.(uuid.UUID)
+	if !ok {
+		return uuid.Nil, errors.New("user_id is not a valid UUID")
+	}
+
+	return userUUID, nil
+}
+
+func GetUserFromContext(c *gin.Context) (models.User, error) {
+	// コンテキストからユーザーを取得
+	user, exists := c.Get("user")
+	if !exists {
+		return models.User{}, errors.New("user not authenticated")
+	}
+
+	// ユーザーがUser型かチェック
+	userModel, ok := user.(models.User)
+	if !ok {
+		return models.User{}, errors.New("user is not a valid User model")
+	}
+
+	return userModel, nil
 }
