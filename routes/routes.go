@@ -12,6 +12,8 @@ func SetupRoutes(r *gin.Engine) {
 	{
 		public.POST("/register", controllers.Register)
 		public.POST("/login", controllers.Login)
+		public.GET("/articles", controllers.GetArticles)
+		public.GET("/articles/:id", controllers.GetArticle)
 	}
 
 	protected := r.Group("/api")
@@ -25,8 +27,8 @@ func SetupRoutes(r *gin.Engine) {
 		protected.PUT("/users/:id", controllers.UpdateUser)
 		protected.DELETE("/users/:id", controllers.DeleteUser)
 
-		protected.GET("/articles", controllers.GetArticles)
-		protected.GET("/articles/:id", controllers.GetArticle)
 		protected.POST("/articles/add", controllers.AddArticle)
+		protected.PUT("/articles/:id", controllers.UpdateArticle)
+		protected.DELETE("/articles/:id", controllers.DeleteArticle)
 	}
 }

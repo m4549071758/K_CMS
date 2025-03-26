@@ -115,3 +115,72 @@ func AddArticle(c *gin.Context) {
 	config.DB.Preload("User").First(&article, article.ID)
 	c.JSON(http.StatusCreated, article)
 }
+
+func UpdateArticle(c *gin.Context) {
+	id := c.Param("id")
+	var article models.Article
+	if err := config.DB.First(&article, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Article not found"})
+		return
+	}
+
+	userUUID, err := middlewares.GetUserIDFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	if userUUID != article.UserID {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "You are not allowed to update this article"})
+		return
+	}
+
+	var input ArticleInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	article.Title = input.Title
+	article.Excerpt = input.Excerpt
+	article.CoverImageURL = input.CoverImageURL
+	article.OgImageURL = input.OgImageURL
+	article.Tags = models.StringArray(input.Tags)
+	article.Datetime = input.Datetime
+	article.Content = input.Content
+
+	if err := config.DB.Save(&article).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update article"})
+		return
+	}
+
+	config.DB.Preload("User").First(&article, article.ID)
+	c.JSON(http.StatusOK, article)
+}
+
+func DeleteArticle(c *gin.Context) {
+	id := c.Param("id")
+	var article models.Article
+	if err := config.DB.First(&article, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Article not found"})
+		return
+	}
+
+	userUUID, err := middlewares.GetUserIDFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	if userUUID != article.UserID {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "You are not allowed to delete this article"})
+		return
+	}
+
+	if err := config.DB.Delete(&article).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete article"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Article deleted"})
+}
