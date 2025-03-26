@@ -19,18 +19,46 @@ type ArticleInput struct {
 	Content       string   `json:"content" binding:"required"`
 }
 
+type ArticlesResponse struct {
+	ArticleID string `json:"article_id"`
+	Title     string `json:"title"`
+	Excerpt   string `json:"excerpt"`
+}
+
+type ArticleResponse struct {
+	ID            string   `json:"id"`
+	Title         string   `json:"title"`
+	Excerpt       string   `json:"excerpt"`
+	CoverImageURL string   `json:"cover_image"`
+	OgImageURL    string   `json:"og_image"`
+	Tags          []string `json:"tags"`
+	Datetime      string   `json:"datetime"`
+	Content       string   `json:"content"`
+}
+
 func GetArticles(c *gin.Context) {
 	var articles []models.Article
+	var response []ArticlesResponse
 	if err := config.DB.Find(&articles).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch articles"})
 		return
 	}
 
-	c.JSON(http.StatusOK, articles)
+	// 取得した記事をresponseに詰め替え
+	for _, article := range articles {
+		response = append(response, ArticlesResponse{
+			ArticleID: article.ID.String(),
+			Title:     article.Title,
+			Excerpt:   article.Excerpt,
+		})
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 func GetArticle(c *gin.Context) {
 	var article models.Article
+	var response ArticleResponse
 	// パスパラメータから記事idを取得
 	id := c.Param("id")
 
@@ -39,7 +67,18 @@ func GetArticle(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, article)
+	response = ArticleResponse{
+		ID:            article.ID.String(),
+		Title:         article.Title,
+		Excerpt:       article.Excerpt,
+		CoverImageURL: article.CoverImageURL,
+		OgImageURL:    article.OgImageURL,
+		Tags:          article.Tags,
+		Datetime:      article.Datetime,
+		Content:       article.Content,
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 func AddArticle(c *gin.Context) {
