@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"k-cms/config"
+	"k-cms/middlewares"
 	"k-cms/models"
 	"log"
 	"net/http"
@@ -104,4 +105,14 @@ func Login(c *gin.Context) {
 		"user_id": user.ID,
 		"message": "login successful",
 	})
+}
+
+func IsAuthenticated(c *gin.Context) {
+	_, err := middlewares.GetUserIDFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	} else {
+		c.JSON(http.StatusOK, gin.H{"message": "Authenticated"})
+	}
 }

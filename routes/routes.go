@@ -8,6 +8,7 @@ import (
 )
 
 func SetupRoutes(r *gin.Engine) {
+	r.Use(middlewares.CORSMiddleware())
 	public := r.Group("/api")
 	{
 		public.POST("/register", controllers.Register)
@@ -30,5 +31,7 @@ func SetupRoutes(r *gin.Engine) {
 		protected.POST("/articles/add", controllers.AddArticle)
 		protected.PUT("/articles/:id", controllers.UpdateArticle)
 		protected.DELETE("/articles/:id", controllers.DeleteArticle)
+
+		protected.GET("/is_Auth", controllers.IsAuthenticated)
 	}
 }
