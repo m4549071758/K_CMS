@@ -17,10 +17,16 @@ func SetupRoutes(r *gin.Engine) {
 	protected := r.Group("/api")
 	protected.Use(middlewares.AuthMiddleware())
 	{
+		// GET("/エンドポイント:XXX")でパスパラメータが取れる
+
 		protected.GET("/users", controllers.GetUsers)
 		protected.GET("/users/:id", controllers.GetUser)
 		protected.POST("/users", controllers.CreateUser)
 		protected.PUT("/users/:id", controllers.UpdateUser)
 		protected.DELETE("/users/:id", controllers.DeleteUser)
+
+		protected.GET("/articles", controllers.GetArticles)
+		protected.GET("/articles/:id", controllers.GetArticle)
+		protected.POST("/articles/add", controllers.AddArticle)
 	}
 }
