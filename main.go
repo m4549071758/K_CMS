@@ -10,7 +10,12 @@ import (
 
 func main() {
 	config.ConnectDB()
+
 	if err := config.DB.AutoMigrate(&models.User{}); err != nil {
+		panic("Failed to migrate database.")
+	}
+
+	if err := config.DB.AutoMigrate(&models.Article{}); err != nil {
 		panic("Failed to migrate database.")
 	}
 
