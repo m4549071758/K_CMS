@@ -119,7 +119,7 @@ func AddArticle(c *gin.Context) {
 func UpdateArticle(c *gin.Context) {
 	id := c.Param("id")
 	var article models.Article
-	if err := config.DB.First(&article, id).Error; err != nil {
+	if err := config.DB.Where("id = ?", id).First(&article).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Article not found"})
 		return
 	}
@@ -161,7 +161,7 @@ func UpdateArticle(c *gin.Context) {
 func DeleteArticle(c *gin.Context) {
 	id := c.Param("id")
 	var article models.Article
-	if err := config.DB.First(&article, id).Error; err != nil {
+	if err := config.DB.Where("id = ?", id).First(&article).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Article not found"})
 		return
 	}
