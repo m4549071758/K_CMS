@@ -5,6 +5,7 @@ import (
 	"k-cms/middlewares"
 	"k-cms/models"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -148,6 +149,20 @@ func UpdateArticle(c *gin.Context) {
 	article.Tags = models.StringArray(input.Tags)
 	article.Datetime = input.Datetime
 	article.Content = input.Content
+
+	var t time.Time
+
+	t, err = time.Parse(time.RFC3339, input.Datetime)
+	if err != nil {
+
+		t, err = time.Parse("2006-01-02", input.Datetime)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "無効な日付形式です"})
+			return
+		}
+	}
+
+	article.Datetime = t.Format("2006-01-02")
 
 	if err := config.DB.Save(&article).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update article"})
