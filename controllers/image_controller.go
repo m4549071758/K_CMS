@@ -5,6 +5,8 @@ import (
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
+	"k-cms/config"
+	"k-cms/models"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -77,6 +79,18 @@ func UploadImage(c *gin.Context) {
 
 	// 元の画像ファイルを削除
 	os.Remove(tempFilePath)
+
+	image := models.Image{
+		ID:        id,
+		FileName:  webpFileName,
+		ArticleID: uuid.FromStringOrNil(input.ArticleID),
+	}
+
+	if err := config.DB.Create(&image).Error; err != nil {
+		os.Remove(webpFilePath)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save image record"})
+		return
+	}
 
 	// レスポンスを返す
 	fileURL := "https://www.katori.dev/api/images/" + webpFileName
