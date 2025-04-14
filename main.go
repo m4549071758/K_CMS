@@ -19,6 +19,10 @@ func main() {
 		panic("Failed to migrate database.")
 	}
 
+	if err := config.DB.AutoMigrate(&models.Image{}); err != nil {
+		panic("Failed to migrate database.")
+	}
+
 	router := gin.Default()
 	routes.SetupRoutes(router)
 

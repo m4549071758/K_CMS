@@ -15,6 +15,7 @@ func SetupRoutes(r *gin.Engine) {
 		public.POST("/login", controllers.Login)
 		public.GET("/articles", controllers.GetArticles)
 		public.GET("/articles/:id", controllers.GetArticle)
+		public.GET("/images/:filename", controllers.GetImage)
 	}
 
 	protected := r.Group("/api")
@@ -33,5 +34,7 @@ func SetupRoutes(r *gin.Engine) {
 		protected.DELETE("/articles/:id", controllers.DeleteArticle)
 
 		protected.GET("/is_Auth", controllers.IsAuthenticated)
+
+		protected.POST("/images/upload", controllers.UploadImage)
 	}
 }
