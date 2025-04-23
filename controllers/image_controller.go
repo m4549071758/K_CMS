@@ -48,6 +48,10 @@ func UploadImage(c *gin.Context) {
 	if fileExtension == ".webp" {
 		webpFileName = id.String() + fileExtension
 		webpFilePath = filepath.Join(uploadDir, webpFileName)
+		if err := c.SaveUploadedFile(file, webpFilePath); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save uploaded file"})
+			return
+		}
 	} else {
 		// Webp変換は一時ファイルで処理する
 		tempFileName := id.String() + fileExtension
