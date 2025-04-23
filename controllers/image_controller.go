@@ -16,10 +16,6 @@ import (
 	"github.com/gofrs/uuid/v5"
 )
 
-type ImageInput struct {
-	ArticleID string `form:"article_id" binding:"required"`
-}
-
 type ImageResponse struct {
 	FileName  string `json:"file_name"`
 	ArticleID string `json:"article_id"`
@@ -30,12 +26,6 @@ func UploadImage(c *gin.Context) {
 	file, err := c.FormFile("image")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to upload image"})
-		return
-	}
-
-	var input ImageInput
-	if err := c.ShouldBind(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -72,9 +62,8 @@ func UploadImage(c *gin.Context) {
 	os.Remove(tempFilePath)
 
 	image := models.Image{
-		ID:        id,
-		FileName:  webpFileName,
-		ArticleID: uuid.FromStringOrNil(input.ArticleID),
+		ID:       id,
+		FileName: webpFileName,
 	}
 
 	if err := config.DB.Create(&image).Error; err != nil {
@@ -86,9 +75,8 @@ func UploadImage(c *gin.Context) {
 	fileURL := "https://www.katori.dev/api/images/" + webpFileName
 
 	c.JSON(http.StatusCreated, ImageResponse{
-		FileName:  webpFileName,
-		ArticleID: input.ArticleID,
-		FileURL:   fileURL,
+		FileName: webpFileName,
+		FileURL:  fileURL,
 	})
 }
 
