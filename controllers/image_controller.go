@@ -42,24 +42,32 @@ func UploadImage(c *gin.Context) {
 		return
 	}
 
-	// 一時ファイルで処理する
-	tempFileName := id.String() + fileExtension
-	tempFilePath := filepath.Join(uploadDir, tempFileName)
-	if err := c.SaveUploadedFile(file, tempFilePath); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save uploaded file"})
-		return
-	}
+	var webpFileName string
+	var webpFilePath string
 
-	webpFileName := id.String() + ".webp"
-	webpFilePath := filepath.Join(uploadDir, webpFileName)
+	if fileExtension == ".webp" {
+		webpFileName = id.String() + fileExtension
+		webpFilePath = filepath.Join(uploadDir, webpFileName)
+	} else {
+		// Webp変換は一時ファイルで処理する
+		tempFileName := id.String() + fileExtension
+		tempFilePath := filepath.Join(uploadDir, tempFileName)
+		if err := c.SaveUploadedFile(file, tempFilePath); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save uploaded file"})
+			return
+		}
 
-	if err := convertToWebP(tempFilePath, webpFilePath, 80); err != nil {
+		webpFileName = id.String() + ".webp"
+		webpFilePath = filepath.Join(uploadDir, webpFileName)
+
+		if err := convertToWebP(tempFilePath, webpFilePath, 80); err != nil {
+			os.Remove(tempFilePath)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to convert image to WebP"})
+			return
+		}
+
 		os.Remove(tempFilePath)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to convert image to WebP"})
-		return
 	}
-
-	os.Remove(tempFilePath)
 
 	image := models.Image{
 		ID:       id,
