@@ -28,6 +28,7 @@ func SetupRoutes(r *gin.Engine) {
 		protected.POST("/users", controllers.CreateUser)
 		protected.PUT("/users/:id", controllers.UpdateUser)
 		protected.DELETE("/users/:id", controllers.DeleteUser)
+		protected.POST("/change-password", controllers.ChangePassword)
 
 		protected.POST("/articles/add", controllers.AddArticle)
 		protected.PUT("/articles/:id", controllers.UpdateArticle)
