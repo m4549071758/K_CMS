@@ -4,6 +4,7 @@ import (
 	"k-cms/config"
 	"k-cms/middlewares"
 	"k-cms/models"
+	"k-cms/utils"
 	"net/http"
 	"time"
 
@@ -113,6 +114,9 @@ func AddArticle(c *gin.Context) {
 		return
 	}
 
+	// Send webhook notification for article creation
+	utils.SendBuildWebhook("create", article.ID.String())
+
 	config.DB.Preload("User").First(&article, article.ID)
 	c.JSON(http.StatusCreated, article)
 }
@@ -169,6 +173,9 @@ func UpdateArticle(c *gin.Context) {
 		return
 	}
 
+	// Send webhook notification for article update
+	utils.SendBuildWebhook("update", article.ID.String())
+
 	config.DB.Preload("User").First(&article, article.ID)
 	c.JSON(http.StatusOK, article)
 }
@@ -196,6 +203,9 @@ func DeleteArticle(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete article"})
 		return
 	}
+
+	// Send webhook notification for article deletion
+	utils.SendBuildWebhook("delete", article.ID.String())
 
 	c.JSON(http.StatusOK, gin.H{"message": "Article deleted"})
 }
