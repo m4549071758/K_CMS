@@ -17,7 +17,7 @@ RUN go mod download
 COPY . .
 
 # Copy .env.docker as .env for container
-COPY .env.docker .env
+COPY .env .env
 
 # Build the application
 RUN go build -o main .
