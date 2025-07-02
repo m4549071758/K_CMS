@@ -16,6 +16,9 @@ RUN go mod download
 # Copy source code
 COPY . .
 
+# Copy .env.docker as .env for container
+COPY .env.docker .env
+
 # Build the application
 RUN go build -o main .
 
@@ -29,6 +32,12 @@ WORKDIR /root/
 
 # Copy the binary from builder stage
 COPY --from=builder /app/main .
+
+# Copy .env file from builder stage
+COPY --from=builder /app/.env .
+
+# Set environment variable to indicate Docker environment
+ENV DOCKER_ENV=true
 
 # Expose port
 EXPOSE 8080
