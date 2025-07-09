@@ -8,7 +8,9 @@ import (
 )
 
 func SetupRoutes(r *gin.Engine) {
+
 	r.Use(middlewares.CORSMiddleware())
+
 	public := r.Group("/api")
 	{
 		public.POST("/register", controllers.Register)
@@ -16,6 +18,9 @@ func SetupRoutes(r *gin.Engine) {
 		public.GET("/articles", controllers.GetArticles)
 		public.GET("/articles/:id", controllers.GetArticle)
 		public.GET("/images/:filename", controllers.GetImage)
+		public.GET("/articles/:id/like-status", controllers.GetLikeStatus)
+		// いいね機能をpublicに移動（fingerprintで同一性を判定）
+		public.POST("/articles/like", controllers.ToggleLike)
 	}
 
 	protected := r.Group("/api")

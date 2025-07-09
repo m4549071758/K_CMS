@@ -37,9 +37,11 @@ type Article struct {
 	Tags          StringArray `gorm:"type:text;not null" json:"tags"`
 	Datetime      string      `gorm:"type:date;not null" json:"datetime"`
 	Content       string      `gorm:"type:longtext;not null" json:"content"`
+	LikeCount     int         `gorm:"default:0;not null" json:"like_count"`
 
 	UserID uuid.UUID `gorm:"type:char(36);not null" json:"user_id"`
 	User   User      `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	Likes  []Like    `gorm:"foreignKey:ArticleID" json:"likes,omitempty"`
 }
 
 func (article *Article) BeforeCreate(tx *gorm.DB) (err error) {

@@ -23,6 +23,10 @@ func main() {
 		panic("Failed to migrate database.")
 	}
 
+	if err := models.MigrateLike(config.DB); err != nil {
+		panic("Failed to migrate like table.")
+	}
+
 	router := gin.Default()
 	routes.SetupRoutes(router)
 
