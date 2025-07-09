@@ -47,9 +47,9 @@ func ToggleLike(c *gin.Context) {
 	// IPアドレス取得
 	clientIP := c.ClientIP()
 
-	// 既存のいいねをチェック
+	// 既存のいいねをチェック（論理削除されたものも含む）
 	var existingLike models.Like
-	err := config.DB.Where("article_id = ? AND fingerprint = ?", input.ArticleID, input.Fingerprint).First(&existingLike).Error
+	err := config.DB.Unscoped().Where("article_id = ? AND fingerprint = ?", input.ArticleID, input.Fingerprint).First(&existingLike).Error
 
 	if err == gorm.ErrRecordNotFound {
 		// いいねが存在しない場合、新規作成
@@ -84,27 +84,52 @@ func ToggleLike(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
 	} else {
-		// いいねが存在する場合、削除
-		if err := config.DB.Delete(&existingLike).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete like"})
-			return
+		// いいねが存在する場合
+		if existingLike.DeletedAt.Valid {
+			// 論理削除されている場合、復元
+			if err := config.DB.Unscoped().Model(&existingLike).Update("deleted_at", nil).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to restore like"})
+				return
+			}
+
+			// 記事のいいね数を更新
+			if err := config.DB.Model(&article).Update("like_count", gorm.Expr("like_count + ?", 1)).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update like count"})
+				return
+			}
+
+			// 更新された記事情報を取得
+			config.DB.First(&article, article.ID)
+
+			c.JSON(http.StatusOK, LikeResponse{
+				ArticleID: input.ArticleID,
+				LikeCount: article.LikeCount,
+				IsLiked:   true,
+				Message:   "Like restored",
+			})
+		} else {
+			// 論理削除されていない場合、削除
+			if err := config.DB.Delete(&existingLike).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete like"})
+				return
+			}
+
+			// 記事のいいね数を更新
+			if err := config.DB.Model(&article).Update("like_count", gorm.Expr("like_count - ?", 1)).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update like count"})
+				return
+			}
+
+			// 更新された記事情報を取得
+			config.DB.First(&article, article.ID)
+
+			c.JSON(http.StatusOK, LikeResponse{
+				ArticleID: input.ArticleID,
+				LikeCount: article.LikeCount,
+				IsLiked:   false,
+				Message:   "Like removed",
+			})
 		}
-
-		// 記事のいいね数を更新
-		if err := config.DB.Model(&article).Update("like_count", gorm.Expr("like_count - ?", 1)).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update like count"})
-			return
-		}
-
-		// 更新された記事情報を取得
-		config.DB.First(&article, article.ID)
-
-		c.JSON(http.StatusOK, LikeResponse{
-			ArticleID: input.ArticleID,
-			LikeCount: article.LikeCount,
-			IsLiked:   false,
-			Message:   "Like removed",
-		})
 	}
 }
 
