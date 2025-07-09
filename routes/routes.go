@@ -18,7 +18,7 @@ func SetupRoutes(r *gin.Engine) {
 	r.Use(middlewares.CORSMiddleware())
 
 	// CSRFトークン取得エンドポイント（CSRFミドルウェア適用）
-	csrf_group := r.Group("/")
+	csrf_group := r.Group("/api")
 	csrf_group.Use(middlewares.CSRFMiddleware())
 	{
 		csrf_group.GET("/csrf-token", func(c *gin.Context) {
@@ -27,7 +27,7 @@ func SetupRoutes(r *gin.Engine) {
 			})
 		})
 		// いいね機能はCSRF保護が必要
-		csrf_group.POST("/api/articles/like", controllers.ToggleLike)
+		csrf_group.POST("/articles/like", controllers.ToggleLike)
 	}
 
 	public := r.Group("/api")
