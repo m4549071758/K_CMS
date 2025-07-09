@@ -4,20 +4,31 @@ import (
 	"k-cms/controllers"
 	"k-cms/middlewares"
 
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	csrf "github.com/utrack/gin-csrf"
 )
 
 func SetupRoutes(r *gin.Engine) {
-	r.Use(middlewares.CORSMiddleware())
-	r.Use(middlewares.CSRFMiddleware())
+	// セッションストアを設定
+	store := cookie.NewStore([]byte("session-secret-key-change-in-production"))
+	r.Use(sessions.Sessions("csrf-session", store))
 
-	// CSRFトークン取得エンドポイント
-	r.GET("/csrf-token", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"csrf_token": csrf.GetToken(c),
+	r.Use(middlewares.CORSMiddleware())
+
+	// CSRFトークン取得エンドポイント（CSRFミドルウェア適用）
+	csrf_group := r.Group("/")
+	csrf_group.Use(middlewares.CSRFMiddleware())
+	{
+		csrf_group.GET("/csrf-token", func(c *gin.Context) {
+			c.JSON(200, gin.H{
+				"csrf_token": csrf.GetToken(c),
+			})
 		})
-	})
+		// いいね機能はCSRF保護が必要
+		csrf_group.POST("/api/articles/like", controllers.ToggleLike)
+	}
 
 	public := r.Group("/api")
 	{
@@ -27,7 +38,6 @@ func SetupRoutes(r *gin.Engine) {
 		public.GET("/articles/:id", controllers.GetArticle)
 		public.GET("/images/:filename", controllers.GetImage)
 		public.GET("/articles/:id/like-status", controllers.GetLikeStatus)
-		public.POST("/articles/like", controllers.ToggleLike)
 	}
 
 	protected := r.Group("/api")
