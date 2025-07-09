@@ -24,6 +24,7 @@ type ArticlesResponse struct {
 	ArticleID string `json:"article_id"`
 	Title     string `json:"title"`
 	Excerpt   string `json:"excerpt"`
+	LikeCount int    `json:"like_count"`
 }
 
 type ArticleResponse struct {
@@ -35,6 +36,7 @@ type ArticleResponse struct {
 	Tags          []string `json:"tags"`
 	Datetime      string   `json:"datetime"`
 	Content       string   `json:"content"`
+	LikeCount     int      `json:"like_count"`
 }
 
 func GetArticles(c *gin.Context) {
@@ -51,6 +53,7 @@ func GetArticles(c *gin.Context) {
 			ArticleID: article.ID.String(),
 			Title:     article.Title,
 			Excerpt:   article.Excerpt,
+			LikeCount: article.LikeCount,
 		})
 	}
 
@@ -77,6 +80,7 @@ func GetArticle(c *gin.Context) {
 		Tags:          article.Tags,
 		Datetime:      article.Datetime,
 		Content:       article.Content,
+		LikeCount:     article.LikeCount,
 	}
 
 	c.JSON(http.StatusOK, response)
