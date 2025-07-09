@@ -5,6 +5,8 @@ import (
 	"k-cms/middlewares"
 	"k-cms/models"
 	"k-cms/utils"
+
+	"log"
 	"net/http"
 	"time"
 
@@ -25,6 +27,7 @@ type ArticlesResponse struct {
 	ArticleID string `json:"article_id"`
 	Title     string `json:"title"`
 	Excerpt   string `json:"excerpt"`
+	LikeCount int    `json:"like_count"`
 }
 
 type ArticleResponse struct {
@@ -36,15 +39,22 @@ type ArticleResponse struct {
 	Tags          []string `json:"tags"`
 	Datetime      string   `json:"datetime"`
 	Content       string   `json:"content"`
+	LikeCount     int      `json:"like_count"`
 }
 
 func GetArticles(c *gin.Context) {
 	var articles []models.Article
 	var response []ArticlesResponse
+
+	log.Println("GetArticles: Starting to fetch articles")
+
 	if err := config.DB.Find(&articles).Error; err != nil {
+		log.Printf("GetArticles: Database error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch articles"})
 		return
 	}
+
+	log.Printf("GetArticles: Found %d articles", len(articles))
 
 	// 取得した記事をresponseに詰め替え
 	for _, article := range articles {
@@ -52,9 +62,11 @@ func GetArticles(c *gin.Context) {
 			ArticleID: article.ID.String(),
 			Title:     article.Title,
 			Excerpt:   article.Excerpt,
+			LikeCount: article.LikeCount,
 		})
 	}
 
+	log.Printf("GetArticles: Returning %d articles", len(response))
 	c.JSON(http.StatusOK, response)
 }
 
@@ -78,6 +90,7 @@ func GetArticle(c *gin.Context) {
 		Tags:          article.Tags,
 		Datetime:      article.Datetime,
 		Content:       article.Content,
+		LikeCount:     article.LikeCount,
 	}
 
 	c.JSON(http.StatusOK, response)
