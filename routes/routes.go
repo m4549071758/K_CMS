@@ -13,6 +13,13 @@ import (
 func SetupRoutes(r *gin.Engine) {
 	// セッションストアを設定
 	store := cookie.NewStore([]byte("session-secret-key-change-in-production"))
+	store.Options(sessions.Options{
+		Path:     "/",
+		MaxAge:   3600,
+		Secure:   false, // 本番環境ではtrueに設定
+		HttpOnly: false, // JavaScriptからアクセス可能にする
+		SameSite: 1,     // Lax
+	})
 	r.Use(sessions.Sessions("csrf-session", store))
 
 	r.Use(middlewares.CORSMiddleware())
