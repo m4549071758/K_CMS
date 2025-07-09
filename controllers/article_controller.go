@@ -4,6 +4,7 @@ import (
 	"k-cms/config"
 	"k-cms/middlewares"
 	"k-cms/models"
+	"log"
 	"net/http"
 	"time"
 
@@ -42,10 +43,16 @@ type ArticleResponse struct {
 func GetArticles(c *gin.Context) {
 	var articles []models.Article
 	var response []ArticlesResponse
+
+	log.Println("GetArticles: Starting to fetch articles")
+
 	if err := config.DB.Find(&articles).Error; err != nil {
+		log.Printf("GetArticles: Database error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch articles"})
 		return
 	}
+
+	log.Printf("GetArticles: Found %d articles", len(articles))
 
 	// 取得した記事をresponseに詰め替え
 	for _, article := range articles {
@@ -57,6 +64,7 @@ func GetArticles(c *gin.Context) {
 		})
 	}
 
+	log.Printf("GetArticles: Returning %d articles", len(response))
 	c.JSON(http.StatusOK, response)
 }
 
