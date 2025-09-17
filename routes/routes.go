@@ -18,7 +18,7 @@ func SetupRoutes(r *gin.Engine) {
 		public.GET("/articles", controllers.GetArticles)
 		public.GET("/articles/:id", controllers.GetArticle)
 		public.GET("/images/:filename", controllers.GetImage)
-		public.GET("/articles/:id/like-status", controllers.GetLikeStatus)
+		public.GET("/like-status/:id", controllers.GetLikeStatus)
 		// いいね機能をpublicに移動（fingerprintで同一性を判定）
 		public.POST("/articles/like", controllers.ToggleLike)
 	}
