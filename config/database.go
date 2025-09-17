@@ -27,7 +27,7 @@ func ConnectDB() *gorm.DB {
 	user := getEnvWithDefault("DB_USER", "kcms_user")
 	password := getEnvWithDefault("DB_PASSWORD", "kcms_password")
 	dbName := getEnvWithDefault("DB_NAME", "kcms_db")
-	dbHost := getEnvWithDefault("DB_HOST", "192.168.1.101")
+	dbHost := getEnvWithDefault("DB_HOST", "10.0.1.101")
 	dbPort := getEnvWithDefault("DB_PORT", "3306")
 
 	log.Printf("DB接続情報: Host=%s, Port=%s, User=%s, DB=%s", dbHost, dbPort, user, dbName)
