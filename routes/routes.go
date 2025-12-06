@@ -19,8 +19,12 @@ func SetupRoutes(r *gin.Engine) {
 		public.GET("/articles/:id", controllers.GetArticle)
 		public.GET("/images/:filename", controllers.GetImage)
 		public.GET("/like-status/:id", controllers.GetLikeStatus)
+
 		// いいね機能をpublicに移動（fingerprintで同一性を判定）
 		public.POST("/articles/like", controllers.ToggleLike)
+		
+		public.GET("/users/:id", controllers.GetUser) // プロフィール表示用
+		public.GET("/site-config", controllers.GetSiteConfig) // サイト設定用
 	}
 
 	protected := r.Group("/api")
@@ -45,5 +49,8 @@ func SetupRoutes(r *gin.Engine) {
 		protected.GET("/images", controllers.GetImages)
 		protected.DELETE("/images/:id", controllers.DeleteImage)
 		protected.GET("/build-status", controllers.GetBuildStatus)
+
+		protected.GET("/site-config", controllers.GetSiteConfig)
+		protected.PUT("/site-config", controllers.UpdateSiteConfig)
 	}
 }

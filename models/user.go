@@ -10,7 +10,12 @@ type User struct {
 	ID       uuid.UUID `gorm:"type:char(36);primaryKey" json:"id"`
 	Username string    `gorm:"size:255;not null;unique" json:"username"`
 	Email    string    `gorm:"size:255;not null;unique" json:"email"`
-	Password string    `gorm:"size:255;not null" json:"-"`
+	Password   string    `gorm:"size:255;not null" json:"-"`
+	Bio        string    `gorm:"type:text" json:"bio"`
+	GithubUrl  string    `gorm:"size:255" json:"github_url"`
+	TwitterUrl string    `gorm:"size:255" json:"twitter_url"`
+	QiitaUrl   string    `gorm:"size:255" json:"qiita_url"`
+	ZennUrl    string    `gorm:"size:255" json:"zenn_url"`
 }
 
 func NewUUIDv7() uuid.UUID {

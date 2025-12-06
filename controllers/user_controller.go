@@ -59,8 +59,13 @@ func UpdateUser(c *gin.Context) {
 	}
 
 	type UpdateUserInput struct {
-		Username string `json:"username"`
-		Email    string `json:"email"`
+		Username   string `json:"username"`
+		Email      string `json:"email"`
+		Bio        string `json:"bio"`
+		GithubUrl  string `json:"github_url"`
+		TwitterUrl string `json:"twitter_url"`
+		QiitaUrl   string `json:"qiita_url"`
+		ZennUrl    string `json:"zenn_url"`
 	}
 
 	var input UpdateUserInput
@@ -76,6 +81,26 @@ func UpdateUser(c *gin.Context) {
 	if input.Email != "" {
 		updates["email"] = input.Email
 	}
+	// 空文字での更新も許容するため、ポインタ型にするか、あるいは常に更新するか。
+	// ここでは単純にフィールドが存在すれば更新するようにしたいが、Goのゼロ値問題がある。
+	// JSONのomitempty挙動と合わせて、今回は「送信されたら更新」とするのが望ましいが、
+	// 簡易的に全てstringなので、フロント側で制御してもらう想定で、そのままセットする。
+	// ただし、空文字で消したい場合もあるので、空チェックは外すか、別途ロジックが必要。
+	// 既存が != "" チェックしているので、それに倣うと「空文字にして削除」ができない。
+	// ここは「空文字でも更新できる」ように修正すべきだが、既存のUsername/Emailは必須に近いので維持。
+	// プロフィール系は空もまた値なり。
+
+	// Bioなどは空文字入力で消去したいニーズがあるため、そのまま代入を検討したいが、
+	// map更新形式だとゼロ値除外が面倒。
+	// ShouldBindJSONで構造体に入れた時点で、送られてこなかったのか空文字なのかの区別がつかない。
+	// 厳密にやるなら map[string]interface{} で受けるべき。
+	// 今回は既存実装を踏襲しつつ、プロフィール項目は一括更新(PUT)の思想で、DBの既存値に上書きする形をとる。
+	
+	updates["bio"] = input.Bio
+	updates["github_url"] = input.GithubUrl
+	updates["twitter_url"] = input.TwitterUrl
+	updates["qiita_url"] = input.QiitaUrl
+	updates["zenn_url"] = input.ZennUrl
 
 	if err := config.DB.Model(&user).Updates(updates).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
