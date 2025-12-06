@@ -136,3 +136,48 @@ func GetImage(c *gin.Context) {
 
 	c.File(filePath)
 }
+
+func GetImages(c *gin.Context) {
+	var images []models.Image
+	if err := config.DB.Order("updated_at desc").Find(&images).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch images"})
+		return
+	}
+
+	var response []ImageResponse
+	for _, img := range images {
+		response = append(response, ImageResponse{
+			FileName: img.FileName,
+			FileURL:  "https://www.katori.dev/api/images/" + img.FileName,
+		})
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func DeleteImage(c *gin.Context) {
+	id := c.Param("id")
+	var image models.Image
+
+	// IDまたはファイル名で検索
+	if err := config.DB.Where("id = ? OR file_name = ?", id, id).First(&image).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Image not found"})
+		return
+	}
+
+	// 実ファイルの削除
+	filePath := filepath.Join("images", image.FileName)
+	if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
+		// ファイルが存在しない場合はDB削除のみ進めるため、エラーログだけ吐いて続行もありうるが
+		// ここではエラーとして返す（または警告のみにするか要検討。今回はエラーログ出しつつ続行する方針で）
+		// log.Printf("Failed to delete file: %v", err)
+	}
+
+	// DBレコードの削除
+	if err := config.DB.Delete(&image).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete image record"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Image deleted successfully"})
+}
