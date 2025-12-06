@@ -127,8 +127,8 @@ func AddArticle(c *gin.Context) {
 		return
 	}
 
-	// Send webhook notification for article creation
-	utils.SendBuildWebhook("create", article.ID.String())
+	// Trigger frontend build for article creation
+	utils.TriggerBuild("create", article.ID.String())
 
 	config.DB.Preload("User").First(&article, article.ID)
 	c.JSON(http.StatusCreated, article)
@@ -186,8 +186,8 @@ func UpdateArticle(c *gin.Context) {
 		return
 	}
 
-	// Send webhook notification for article update
-	utils.SendBuildWebhook("update", article.ID.String())
+	// Trigger frontend build for article update
+	utils.TriggerBuild("update", article.ID.String())
 
 	config.DB.Preload("User").First(&article, article.ID)
 	c.JSON(http.StatusOK, article)
@@ -217,8 +217,8 @@ func DeleteArticle(c *gin.Context) {
 		return
 	}
 
-	// Send webhook notification for article deletion
-	utils.SendBuildWebhook("delete", article.ID.String())
+	// Trigger frontend build for article deletion
+	utils.TriggerBuild("delete", article.ID.String())
 
 	c.JSON(http.StatusOK, gin.H{"message": "Article deleted"})
 }
