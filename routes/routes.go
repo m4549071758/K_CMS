@@ -42,5 +42,6 @@ func SetupRoutes(r *gin.Engine) {
 		protected.GET("/is_Auth", controllers.IsAuthenticated)
 
 		protected.POST("/images/upload", controllers.UploadImage)
+		protected.GET("/build-status", controllers.GetBuildStatus)
 	}
 }

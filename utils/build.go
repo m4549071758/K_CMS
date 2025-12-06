@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"log"
@@ -32,8 +33,12 @@ func TriggerBuild(action, articleID string) {
 
 // executeBuild はビルドスクリプトを実際に実行します
 func executeBuild(scriptPath, action, articleID string) {
+	// ステータス更新: 開始
+	SetBuildStart(action, articleID)
+
 	startTime := time.Now()
 	log.Printf("[Build] ビルドプロセスを開始: action=%s, articleID=%s", action, articleID)
+	AppendBuildLog(fmt.Sprintf("Build started: action=%s, articleID=%s", action, articleID))
 
 	// タイムアウト付きコンテキストを作成
 	ctx, cancel := context.WithTimeout(context.Background(), buildTimeout)
@@ -42,28 +47,97 @@ func executeBuild(scriptPath, action, articleID string) {
 	// ビルドスクリプトを実行
 	cmd := exec.CommandContext(ctx, "/bin/bash", scriptPath, action, articleID)
 
-	// 標準出力と標準エラー出力を取得
-	output, err := cmd.CombinedOutput()
+	// パイプの取得
+	stdoutPipe, err := cmd.StdoutPipe()
+	if err != nil {
+		logErrorAndFinish(action, articleID, startTime, "Failed to get stdout pipe: "+err.Error(), "")
+		return
+	}
+	stderrPipe, err := cmd.StderrPipe()
+	if err != nil {
+		logErrorAndFinish(action, articleID, startTime, "Failed to get stderr pipe: "+err.Error(), "")
+		return
+	}
+
+	// コマンド開始
+	if err := cmd.Start(); err != nil {
+		logErrorAndFinish(action, articleID, startTime, "Failed to start command: "+err.Error(), "")
+		return
+	}
+
+	// ログ読み取り用チャネル
+	logChan := make(chan string)
+	doneChan := make(chan bool)
+
+	// Stdout読み取りゴルーチン
+	go func() {
+		scanner := bufio.NewScanner(stdoutPipe)
+		for scanner.Scan() {
+			text := scanner.Text()
+			logChan <- text
+		}
+		doneChan <- true
+	}()
+
+	// Stderr読み取りゴルーチン
+	go func() {
+		scanner := bufio.NewScanner(stderrPipe)
+		for scanner.Scan() {
+			text := scanner.Text()
+			logChan <- text
+		}
+		doneChan <- true
+	}()
+
+	// ログ収集ループ
+	go func() {
+		for text := range logChan {
+			AppendBuildLog(text)
+		}
+	}()
+
+	// コマンド完了待ち
+	waitErr := cmd.Wait()
+
+	// 読み取りゴルーチンの完了を待つ (2つ分)
+	<-doneChan
+	<-doneChan
+	close(logChan)
 
 	duration := time.Since(startTime)
 
 	// エラーハンドリング
-	if err != nil {
+	if waitErr != nil {
+		errorMsg := waitErr.Error()
 		if ctx.Err() == context.DeadlineExceeded {
-			// タイムアウト
-			logBuildFailure(action, articleID, duration, "タイムアウト", string(output))
-			sendBuildFailureNotification(action, articleID, "タイムアウト", string(output))
-		} else {
-			// その他のエラー
-			logBuildFailure(action, articleID, duration, err.Error(), string(output))
-			sendBuildFailureNotification(action, articleID, err.Error(), string(output))
+			errorMsg = "タイムアウト"
+		} else if exitError, ok := waitErr.(*exec.ExitError); ok {
+			// 終了コードが含まれる場合
+			errorMsg = fmt.Sprintf("Exit code: %d, Error: %s", exitError.ExitCode(), exitError.Error())
 		}
+		
+		logBuildFailure(action, articleID, duration, errorMsg, "See build logs for details")
+		sendBuildFailureNotification(action, articleID, errorMsg, "See build logs for details")
+		
+		AppendBuildLog(fmt.Sprintf("Build failed: %s", errorMsg))
+		SetBuildComplete(false)
 		return
 	}
 
 	// 成功
 	log.Printf("[Build] ✅ ビルド成功: action=%s, articleID=%s, 所要時間=%v", action, articleID, duration)
-	log.Printf("[Build] 出力:\n%s", string(output))
+	
+	AppendBuildLog(fmt.Sprintf("Build success! Duration: %v", duration))
+	SetBuildComplete(true)
+}
+
+// エラー終了時のヘルパー関数
+func logErrorAndFinish(action, articleID string, startTime time.Time, errorMsg string, output string) {
+	duration := time.Since(startTime)
+	logBuildFailure(action, articleID, duration, errorMsg, output)
+	sendBuildFailureNotification(action, articleID, errorMsg, output)
+	AppendBuildLog(fmt.Sprintf("Build failed: %s", errorMsg))
+	SetBuildComplete(false)
 }
 
 // logBuildFailure はビルド失敗時の詳細ログを出力します
