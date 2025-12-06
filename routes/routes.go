@@ -33,7 +33,7 @@ func SetupRoutes(r *gin.Engine) {
 		// GET("/エンドポイント:XXX")でパスパラメータが取れる
 
 		protected.GET("/users", controllers.GetUsers)
-		protected.GET("/users/:id", controllers.GetUser)
+		// protected.GET("/users/:id", controllers.GetUser) // Publicに移動済み
 		protected.POST("/users", controllers.CreateUser)
 		protected.PUT("/users/:id", controllers.UpdateUser)
 		protected.DELETE("/users/:id", controllers.DeleteUser)
@@ -50,7 +50,7 @@ func SetupRoutes(r *gin.Engine) {
 		protected.DELETE("/images/:id", controllers.DeleteImage)
 		protected.GET("/build-status", controllers.GetBuildStatus)
 
-		protected.GET("/site-config", controllers.GetSiteConfig)
+		// protected.GET("/site-config", controllers.GetSiteConfig) // Publicに移動済み
 		protected.PUT("/site-config", controllers.UpdateSiteConfig)
 	}
 }
