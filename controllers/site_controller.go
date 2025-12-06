@@ -66,7 +66,7 @@ func UpdateSiteConfig(c *gin.Context) {
 	}
 
 	// 設定変更後はビルドをトリガー
-	go utils.TriggerBuild("update_site_config")
+	go utils.TriggerBuild("update_site_config", "")
 
 	c.JSON(http.StatusOK, gin.H{"message": "Site config updated and build triggered", "data": siteConfig})
 }
