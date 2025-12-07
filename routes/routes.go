@@ -24,6 +24,7 @@ func SetupRoutes(r *gin.Engine) {
 		public.POST("/articles/like", controllers.ToggleLike)
 		
 		public.GET("/users/:id", controllers.GetUser) // プロフィール表示用
+		public.GET("/owner", controllers.GetOwner)    // オーナープロフィール取得用（新規追加）
 		public.GET("/site-config", controllers.GetSiteConfig) // サイト設定用
 	}
 

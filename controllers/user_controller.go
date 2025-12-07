@@ -20,6 +20,40 @@ func GetUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, users)
 }
 
+// GetOwner はサイトのオーナー（最初のユーザー）の公開プロフィールを取得する
+func GetOwner(c *gin.Context) {
+	var user models.User
+	// 最初のユーザーを取得
+	if err := config.DB.First(&user).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Owner not found"})
+		return
+	}
+
+	// メールアドレスなどの秘密情報を除外したレスポンス構造体
+	type PublicProfile struct {
+		ID         string `json:"id"`
+		Username   string `json:"username"`
+		Bio        string `json:"bio"`
+		GithubUrl  string `json:"github_url"`
+		TwitterUrl string `json:"twitter_url"`
+		QiitaUrl   string `json:"qiita_url"`
+		ZennUrl    string `json:"zenn_url"`
+		// Emailは含めない
+	}
+
+	response := PublicProfile{
+		ID:         user.ID.String(),
+		Username:   user.Username,
+		Bio:        user.Bio,
+		GithubUrl:  user.GithubUrl,
+		TwitterUrl: user.TwitterUrl,
+		QiitaUrl:   user.QiitaUrl,
+		ZennUrl:    user.ZennUrl,
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
 func GetUser(c *gin.Context) {
 	id := c.Param("id")
 
