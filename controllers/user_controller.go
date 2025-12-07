@@ -93,9 +93,10 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 
-	var user models.User
-	if err := config.DB.First(&user, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+	// Contextからユーザーを取得（既にDBから取得済みなので再取得不要）
+	user, err := middlewares.GetUserFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user from context"})
 		return
 	}
 
@@ -166,9 +167,10 @@ func DeleteUser(c *gin.Context) {
 		return
 	}
 
-	var user models.User
-	if err := config.DB.First(&user, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+	// Contextからユーザーを取得
+	user, err := middlewares.GetUserFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user from context"})
 		return
 	}
 
