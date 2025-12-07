@@ -37,7 +37,7 @@ func GetOwner(c *gin.Context) {
 		GithubUrl  string `json:"github_url"`
 		TwitterUrl string `json:"twitter_url"`
 		QiitaUrl   string `json:"qiita_url"`
-		ZennUrl    string `json:"zenn_url"`
+		MisskeyUrl string `json:"misskey_url"`
 		// Emailは含めない
 	}
 
@@ -48,7 +48,7 @@ func GetOwner(c *gin.Context) {
 		GithubUrl:  user.GithubUrl,
 		TwitterUrl: user.TwitterUrl,
 		QiitaUrl:   user.QiitaUrl,
-		ZennUrl:    user.ZennUrl,
+		MisskeyUrl: user.MisskeyUrl,
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -107,7 +107,7 @@ func UpdateUser(c *gin.Context) {
 		GithubUrl  string `json:"github_url"`
 		TwitterUrl string `json:"twitter_url"`
 		QiitaUrl   string `json:"qiita_url"`
-		ZennUrl    string `json:"zenn_url"`
+		MisskeyUrl string `json:"misskey_url"`
 	}
 
 	var input UpdateUserInput
@@ -142,7 +142,7 @@ func UpdateUser(c *gin.Context) {
 	updates["github_url"] = input.GithubUrl
 	updates["twitter_url"] = input.TwitterUrl
 	updates["qiita_url"] = input.QiitaUrl
-	updates["zenn_url"] = input.ZennUrl
+	updates["misskey_url"] = input.MisskeyUrl
 
 	if err := config.DB.Model(&user).Updates(updates).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})

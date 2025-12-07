@@ -15,7 +15,7 @@ type User struct {
 	GithubUrl  string    `gorm:"size:255" json:"github_url"`
 	TwitterUrl string    `gorm:"size:255" json:"twitter_url"`
 	QiitaUrl   string    `gorm:"size:255" json:"qiita_url"`
-	ZennUrl    string    `gorm:"size:255" json:"zenn_url"`
+	MisskeyUrl string    `gorm:"size:255" json:"misskey_url"`
 }
 
 func NewUUIDv7() uuid.UUID {
