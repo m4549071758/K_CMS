@@ -79,7 +79,14 @@ func CreateUser(c *gin.Context) {
 
 func UpdateUser(c *gin.Context) {
 	id := c.Param("id")
-	currentUserID := c.GetString("user_id")
+	
+	// Contextからuuid.UUIDとして取得
+	currentUserUUID, err := middlewares.GetUserIDFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	currentUserID := currentUserUUID.String()
 
 	if currentUserID != id {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "You are not allowed to update this user"})
@@ -145,7 +152,14 @@ func UpdateUser(c *gin.Context) {
 
 func DeleteUser(c *gin.Context) {
 	id := c.Param("id")
-	currentUserID := c.GetString("user_id")
+	
+	// Contextからuuid.UUIDとして取得
+	currentUserUUID, err := middlewares.GetUserIDFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	currentUserID := currentUserUUID.String()
 
 	if currentUserID != id {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "You are not allowed to delete this user"})
