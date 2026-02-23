@@ -22,6 +22,10 @@ func SetupRoutes(r *gin.Engine) {
 
 		// いいね機能をpublicに移動（fingerprintで同一性を判定）
 		public.POST("/articles/like", controllers.ToggleLike)
+
+		// アクセスカウンター（fingerprint + 日付で重複防止）
+		public.POST("/articles/pageview", controllers.RecordPageView)
+		public.GET("/pageview-count/:id", controllers.GetPageViewCount)
 		
 		public.GET("/users/:id", controllers.GetUser) // プロフィール表示用
 		public.GET("/owner", controllers.GetOwner)    // オーナープロフィール取得用（新規追加）

@@ -31,6 +31,10 @@ func main() {
 		panic("Failed to migrate like table.")
 	}
 
+	if err := models.MigratePageView(config.DB); err != nil {
+		panic("Failed to migrate page_view table.")
+	}
+
 	router := gin.Default()
 	routes.SetupRoutes(router)
 
