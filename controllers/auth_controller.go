@@ -63,7 +63,7 @@ func Login(c *gin.Context) {
 
 	// HttpOnly Cookieをセット
 	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("auth_token", tokenString, 3600*24*7, "/", "", true, true)
+	c.SetCookie("auth_token", tokenString, 3600*24*7, "/", "www.katori.dev", true, true)
 
 	c.JSON(http.StatusOK, gin.H{
 		"user_id": user.ID,
@@ -73,7 +73,7 @@ func Login(c *gin.Context) {
 
 func Logout(c *gin.Context) {
 	// Cookieを削除
-	c.SetCookie("auth_token", "", -1, "/", "", true, true)
+	c.SetCookie("auth_token", "", -1, "/", "www.katori.dev", true, true)
 	c.JSON(http.StatusOK, gin.H{"message": "logout successful"})
 }
 
