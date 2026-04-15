@@ -4,11 +4,16 @@ import (
 	"k-cms/config"
 	"k-cms/models"
 	"k-cms/routes"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
+	if os.Getenv("JWT_SECRET") == "" {
+		panic("JWT_SECRET environment variable is not set. Please set it for security.")
+	}
+
 	config.ConnectDB()
 
 	if err := config.DB.AutoMigrate(&models.User{}); err != nil {

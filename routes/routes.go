@@ -13,7 +13,6 @@ func SetupRoutes(r *gin.Engine) {
 
 	public := r.Group("/api")
 	{
-		public.POST("/register", controllers.Register)
 		public.POST("/login", controllers.Login)
 		public.GET("/articles", controllers.GetArticles)
 		public.GET("/articles/:id", controllers.GetArticle)
@@ -49,6 +48,7 @@ func SetupRoutes(r *gin.Engine) {
 		protected.DELETE("/articles/:id", controllers.DeleteArticle)
 
 		protected.GET("/is_Auth", controllers.IsAuthenticated)
+		protected.POST("/logout", controllers.Logout)
 
 		protected.POST("/images/upload", controllers.UploadImage)
 		protected.GET("/images", controllers.GetImages)

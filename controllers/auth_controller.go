@@ -25,45 +25,6 @@ type RegisterInput struct {
 	Password string `json:"password" binding:"required"`
 }
 
-func Register(c *gin.Context) {
-
-	// 入力バリデーション
-	var input RegisterInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// 既存のユーザーチェック
-	var existingUser models.User
-	if err := config.DB.Where("username = ?", input.Username).Or("email = ?", input.Email).First(&existingUser).Error; err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Username or email already exists."})
-		return
-	}
-
-	// パスワードのハッシュ化
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password."})
-		return
-	}
-
-	// userモデルへ挿入
-	user := models.User{
-		Username: input.Username,
-		Email:    input.Email,
-		Password: string(hashedPassword),
-	}
-
-	// DBへの登録処理
-	if err := config.DB.Create(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user."})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{"message": "user created successfully"})
-}
-
 func Login(c *gin.Context) {
 	// 入力バリデーション
 	var input LoginInput
@@ -90,8 +51,8 @@ func Login(c *gin.Context) {
 	// JWTトークンを生成
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": user.ID,
-		// トークン有効期限を24時間に設定
-		"exp": time.Now().Add(time.Hour * 24).Unix(),
+		// トークン有効期限を7日間に設定
+		"exp": time.Now().Add(time.Hour * 24 * 7).Unix(),
 	})
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
@@ -100,11 +61,20 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	// HttpOnly Cookieをセット
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("auth_token", tokenString, 3600*24*7, "/", "", true, true)
+
 	c.JSON(http.StatusOK, gin.H{
-		"token":   tokenString,
 		"user_id": user.ID,
 		"message": "login successful",
 	})
+}
+
+func Logout(c *gin.Context) {
+	// Cookieを削除
+	c.SetCookie("auth_token", "", -1, "/", "", true, true)
+	c.JSON(http.StatusOK, gin.H{"message": "logout successful"})
 }
 
 func IsAuthenticated(c *gin.Context) {

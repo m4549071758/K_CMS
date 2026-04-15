@@ -122,9 +122,9 @@ func convertToWebP(inputPath, outputPath string, quality float32) error {
 }
 
 func GetImage(c *gin.Context) {
-	fileName := c.Param("filename")
-	if fileName == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "File name is required"})
+	fileName := filepath.Base(c.Param("filename"))
+	if fileName == "" || fileName == "." || fileName == "/" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file name"})
 		return
 	}
 
