@@ -67,15 +67,6 @@ func GetUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, user)
 }
-func CreateUser(c *gin.Context) {
-	var input RegisterInput
-	if err := c.ShouldBindBodyWithJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	Register(c)
-}
 
 func UpdateUser(c *gin.Context) {
 	id := c.Param("id")

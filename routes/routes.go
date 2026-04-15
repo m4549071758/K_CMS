@@ -37,8 +37,6 @@ func SetupRoutes(r *gin.Engine) {
 		// GET("/エンドポイント:XXX")でパスパラメータが取れる
 
 		protected.GET("/users", controllers.GetUsers)
-		// protected.GET("/users/:id", controllers.GetUser) // Publicに移動済み
-		protected.POST("/users", controllers.CreateUser)
 		protected.PUT("/users/:id", controllers.UpdateUser)
 		protected.DELETE("/users/:id", controllers.DeleteUser)
 		protected.POST("/change-password", controllers.ChangePassword)
