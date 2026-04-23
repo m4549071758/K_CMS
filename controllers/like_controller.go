@@ -3,6 +3,7 @@ package controllers
 import (
 	"k-cms/config"
 	"k-cms/models"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -101,7 +102,8 @@ func ToggleLike(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error: " + err.Error()})
+		log.Printf("ToggleLike database error (article_id=%s, fingerprint=%s): %v", input.ArticleID, input.Fingerprint, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
 	}
 
