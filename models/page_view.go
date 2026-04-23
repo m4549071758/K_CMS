@@ -13,10 +13,10 @@ import (
 type PageView struct {
 	gorm.Model
 	ID          uuid.UUID `gorm:"type:char(36);primaryKey" json:"id"`
-	ArticleID   uuid.UUID `gorm:"type:char(36);not null;uniqueIndex:idx_pv_article_fp_date" json:"article_id"`
-	Fingerprint string    `gorm:"type:varchar(255);not null;uniqueIndex:idx_pv_article_fp_date" json:"fingerprint"`
+	ArticleID   uuid.UUID `gorm:"type:char(36);not null;uniqueIndex:uq_pageview_article_fp_date" json:"article_id"`
+	Fingerprint string    `gorm:"type:varchar(255);not null;uniqueIndex:uq_pageview_article_fp_date" json:"fingerprint"`
 	IPAddress   string    `gorm:"type:varchar(45);not null" json:"ip_address"`
-	VisitedDate time.Time `gorm:"type:date;not null;uniqueIndex:idx_pv_article_fp_date" json:"visited_date"`
+	VisitedDate time.Time `gorm:"type:date;not null;uniqueIndex:uq_pageview_article_fp_date" json:"visited_date"`
 	Article     Article   `gorm:"foreignKey:ArticleID" json:"article,omitempty"`
 }
 
