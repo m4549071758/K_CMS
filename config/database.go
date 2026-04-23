@@ -47,13 +47,15 @@ func ConnectDB() *gorm.DB {
 
 	// 接続プールの設定
 	sqlDB, err := DB.DB()
-	if err == nil {
-		sqlDB.SetMaxIdleConns(10)                  // アイドル状態の最大接続数
-		sqlDB.SetMaxOpenConns(100)                 // 同時に開ける最大接続数
-		sqlDB.SetConnMaxLifetime(time.Hour)        // 接続を再利用できる最大時間
-		sqlDB.SetConnMaxIdleTime(30 * time.Minute) // アイドル接続が保持される最大時間
+	if err != nil {
+		log.Printf("DB接続プール取得エラー: %v", err)
+		panic("Failed to configure database connection pool.")
 	}
 
+	sqlDB.SetMaxIdleConns(10)                  // アイドル状態の最大接続数
+	sqlDB.SetMaxOpenConns(100)                 // 同時に開ける最大接続数
+	sqlDB.SetConnMaxLifetime(time.Hour)        // 接続を再利用できる最大時間
+	sqlDB.SetConnMaxIdleTime(30 * time.Minute) // アイドル接続が保持される最大時間
 	log.Println("Database connected successfully with pooling and prepared statements.")
 	return DB
 }
