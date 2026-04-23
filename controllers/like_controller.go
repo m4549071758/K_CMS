@@ -31,9 +31,9 @@ func ToggleLike(c *gin.Context) {
 		return
 	}
 
-	// 記事の存在確認
+	// 記事の存在確認（IDだけ確認）
 	var article models.Article
-	if err := config.DB.Where("id = ?", input.ArticleID).First(&article).Error; err != nil {
+	if err := config.DB.Select("id, like_count").Where("id = ?", input.ArticleID).First(&article).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Article not found"})
 		return
 	}
@@ -44,93 +44,70 @@ func ToggleLike(c *gin.Context) {
 		return
 	}
 
-	// IPアドレス取得
 	clientIP := c.ClientIP()
+	articleUUID, _ := uuid.FromString(input.ArticleID)
 
-	// 既存のいいねをチェック（論理削除されたものも含む）
-	var existingLike models.Like
-	err := config.DB.Unscoped().Where("article_id = ? AND fingerprint = ?", input.ArticleID, input.Fingerprint).First(&existingLike).Error
+	var response LikeResponse
 
-	if err == gorm.ErrRecordNotFound {
-		// いいねが存在しない場合、新規作成
-		articleUUID, _ := uuid.FromString(input.ArticleID)
-		newLike := models.Like{
-			ArticleID:   articleUUID,
-			Fingerprint: input.Fingerprint,
-			IPAddress:   clientIP,
-		}
+	// トランザクション開始
+	err := config.DB.Transaction(func(tx *gorm.DB) error {
+		var existingLike models.Like
+		err := tx.Unscoped().Where("article_id = ? AND fingerprint = ?", input.ArticleID, input.Fingerprint).First(&existingLike).Error
 
-		if err := config.DB.Create(&newLike).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create like"})
-			return
-		}
-
-		// 記事のいいね数を更新
-		if err := config.DB.Model(&article).Update("like_count", gorm.Expr("like_count + ?", 1)).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update like count"})
-			return
-		}
-
-		// 更新された記事情報を取得
-		config.DB.First(&article, article.ID)
-
-		c.JSON(http.StatusOK, LikeResponse{
-			ArticleID: input.ArticleID,
-			LikeCount: article.LikeCount,
-			IsLiked:   true,
-			Message:   "Like added",
-		})
-	} else if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
-		return
-	} else {
-		// いいねが存在する場合
-		if existingLike.DeletedAt.Valid {
-			// 論理削除されている場合、復元
-			if err := config.DB.Unscoped().Model(&existingLike).Update("deleted_at", nil).Error; err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to restore like"})
-				return
+		if err == gorm.ErrRecordNotFound {
+			// 新規作成
+			newLike := models.Like{
+				ArticleID:   articleUUID,
+				Fingerprint: input.Fingerprint,
+				IPAddress:   clientIP,
 			}
-
-			// 記事のいいね数を更新
-			if err := config.DB.Model(&article).Update("like_count", gorm.Expr("like_count + ?", 1)).Error; err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update like count"})
-				return
+			if err := tx.Create(&newLike).Error; err != nil {
+				return err
 			}
-
-			// 更新された記事情報を取得
-			config.DB.First(&article, article.ID)
-
-			c.JSON(http.StatusOK, LikeResponse{
-				ArticleID: input.ArticleID,
-				LikeCount: article.LikeCount,
-				IsLiked:   true,
-				Message:   "Like restored",
-			})
+			// カウントアップ
+			if err := tx.Model(&article).Update("like_count", gorm.Expr("like_count + ?", 1)).Error; err != nil {
+				return err
+			}
+			response = LikeResponse{IsLiked: true, Message: "Like added"}
+		} else if err != nil {
+			return err
 		} else {
-			// 論理削除されていない場合、削除
-			if err := config.DB.Delete(&existingLike).Error; err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete like"})
-				return
+			if existingLike.DeletedAt.Valid {
+				// 復元
+				if err := tx.Unscoped().Model(&existingLike).Update("deleted_at", nil).Error; err != nil {
+					return err
+				}
+				if err := tx.Model(&article).Update("like_count", gorm.Expr("like_count + ?", 1)).Error; err != nil {
+					return err
+				}
+				response = LikeResponse{IsLiked: true, Message: "Like restored"}
+			} else {
+				// 削除
+				if err := tx.Delete(&existingLike).Error; err != nil {
+					return err
+				}
+				if err := tx.Model(&article).Update("like_count", gorm.Expr("like_count - ?", 1)).Error; err != nil {
+					return err
+				}
+				response = LikeResponse{IsLiked: false, Message: "Like removed"}
 			}
-
-			// 記事のいいね数を更新
-			if err := config.DB.Model(&article).Update("like_count", gorm.Expr("like_count - ?", 1)).Error; err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update like count"})
-				return
-			}
-
-			// 更新された記事情報を取得
-			config.DB.First(&article, article.ID)
-
-			c.JSON(http.StatusOK, LikeResponse{
-				ArticleID: input.ArticleID,
-				LikeCount: article.LikeCount,
-				IsLiked:   false,
-				Message:   "Like removed",
-			})
 		}
+
+		// 最新のカウントを取得（Selectで絞り込み）
+		if err := tx.Model(&article).Select("like_count").First(&article).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error: " + err.Error()})
+		return
 	}
+
+	response.ArticleID = input.ArticleID
+	response.LikeCount = article.LikeCount
+	c.JSON(http.StatusOK, response)
 }
 
 // 記事のいいね状態を取得
@@ -143,9 +120,9 @@ func GetLikeStatus(c *gin.Context) {
 		return
 	}
 
-	// 記事の存在確認
+	// 記事の存在確認（Selectで絞り込み）
 	var article models.Article
-	if err := config.DB.Where("id = ?", articleID).First(&article).Error; err != nil {
+	if err := config.DB.Select("id, like_count").Where("id = ?", articleID).First(&article).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Article not found"})
 		return
 	}

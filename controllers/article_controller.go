@@ -43,27 +43,19 @@ type ArticleResponse struct {
 }
 
 func GetArticles(c *gin.Context) {
-	var articles []models.Article
 	var response []ArticlesResponse
 
 	log.Println("GetArticles: Starting to fetch articles")
 
-	if err := config.DB.Find(&articles).Error; err != nil {
+	// 改善: Select で必要なカラムだけに絞り、Scan で直接 response に入れる
+	// これにより本文 (Content) などの重いデータを読み込まない
+	if err := config.DB.Model(&models.Article{}).
+		Select("id as article_id, title, excerpt, like_count").
+		Order("datetime desc"). // 日付順のソートを追加
+		Scan(&response).Error; err != nil {
 		log.Printf("GetArticles: Database error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch articles"})
 		return
-	}
-
-	log.Printf("GetArticles: Found %d articles", len(articles))
-
-	// 取得した記事をresponseに詰め替え
-	for _, article := range articles {
-		response = append(response, ArticlesResponse{
-			ArticleID: article.ID.String(),
-			Title:     article.Title,
-			Excerpt:   article.Excerpt,
-			LikeCount: article.LikeCount,
-		})
 	}
 
 	log.Printf("GetArticles: Returning %d articles", len(response))

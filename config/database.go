@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
@@ -36,13 +37,24 @@ func ConnectDB() *gorm.DB {
 		user, password, dbHost, dbPort, dbName)
 
 	var err error
-	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
+		PrepareStmt: true, // SQL解析結果をキャッシュして高速化
+	})
 	if err != nil {
 		log.Printf("DB接続エラー: %v, DSN: %s", err, dsn)
 		panic("Failed to connect to database.")
 	}
 
-	log.Println("Database connected successfully.")
+	// 接続プールの設定
+	sqlDB, err := DB.DB()
+	if err == nil {
+		sqlDB.SetMaxIdleConns(10)                  // アイドル状態の最大接続数
+		sqlDB.SetMaxOpenConns(100)                 // 同時に開ける最大接続数
+		sqlDB.SetConnMaxLifetime(time.Hour)        // 接続を再利用できる最大時間
+		sqlDB.SetConnMaxIdleTime(30 * time.Minute) // アイドル接続が保持される最大時間
+	}
+
+	log.Println("Database connected successfully with pooling and prepared statements.")
 	return DB
 }
 

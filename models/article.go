@@ -35,11 +35,11 @@ type Article struct {
 	CoverImageURL string      `gorm:"varchar(255);not null" json:"cover_image"`
 	OgImageURL    string      `gorm:"varchar(255);not null" json:"og_image"`
 	Tags          StringArray `gorm:"type:text;not null" json:"tags"`
-	Datetime      string      `gorm:"type:date;not null" json:"datetime"`
+	Datetime      string      `gorm:"type:date;not null;index" json:"datetime"`
 	Content       string      `gorm:"type:longtext;not null" json:"content"`
 	LikeCount     int         `gorm:"default:0;not null" json:"like_count"`
 
-	UserID uuid.UUID `gorm:"type:char(36);not null" json:"user_id"`
+	UserID uuid.UUID `gorm:"type:char(36);not null;index" json:"user_id"`
 	User   User      `gorm:"foreignKey:UserID" json:"user,omitempty"`
 	Likes  []Like    `gorm:"foreignKey:ArticleID" json:"likes,omitempty"`
 }
