@@ -32,13 +32,18 @@ func AuthMiddleware() gin.HandlerFunc {
 		})
 
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication failed."})
 			c.Abort()
 			return
 		}
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			userIDStr := claims["user_id"].(string)
+			userIDStr, ok := claims["user_id"].(string)
+			if !ok || userIDStr == "" {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims."})
+				c.Abort()
+				return
+			}
 			userID, err := uuid.FromString(userIDStr)
 			if err != nil {
 				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID format"})

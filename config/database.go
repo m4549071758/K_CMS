@@ -41,7 +41,7 @@ func ConnectDB() *gorm.DB {
 		PrepareStmt: true, // SQL解析結果をキャッシュして高速化
 	})
 	if err != nil {
-		log.Printf("DB接続エラー: %v, DSN: %s", err, dsn)
+		log.Printf("DB接続エラー: %v (host=%s port=%s db=%s user=%s)", err, dbHost, dbPort, dbName, user)
 		panic("Failed to connect to database.")
 	}
 

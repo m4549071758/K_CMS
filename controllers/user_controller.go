@@ -17,7 +17,30 @@ func GetUsers(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, users)
+	type PublicProfile struct {
+		ID         string `json:"id"`
+		Username   string `json:"username"`
+		Bio        string `json:"bio"`
+		GithubUrl  string `json:"github_url"`
+		TwitterUrl string `json:"twitter_url"`
+		QiitaUrl   string `json:"qiita_url"`
+		MisskeyUrl string `json:"misskey_url"`
+	}
+
+	profiles := make([]PublicProfile, 0, len(users))
+	for _, u := range users {
+		profiles = append(profiles, PublicProfile{
+			ID:         u.ID.String(),
+			Username:   u.Username,
+			Bio:        u.Bio,
+			GithubUrl:  u.GithubUrl,
+			TwitterUrl: u.TwitterUrl,
+			QiitaUrl:   u.QiitaUrl,
+			MisskeyUrl: u.MisskeyUrl,
+		})
+	}
+
+	c.JSON(http.StatusOK, profiles)
 }
 
 // GetOwner はサイトのオーナー（最初のユーザー）の公開プロフィールを取得する
@@ -65,7 +88,25 @@ func GetUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	type PublicProfile struct {
+		ID         string `json:"id"`
+		Username   string `json:"username"`
+		Bio        string `json:"bio"`
+		GithubUrl  string `json:"github_url"`
+		TwitterUrl string `json:"twitter_url"`
+		QiitaUrl   string `json:"qiita_url"`
+		MisskeyUrl string `json:"misskey_url"`
+	}
+
+	c.JSON(http.StatusOK, PublicProfile{
+		ID:         user.ID.String(),
+		Username:   user.Username,
+		Bio:        user.Bio,
+		GithubUrl:  user.GithubUrl,
+		TwitterUrl: user.TwitterUrl,
+		QiitaUrl:   user.QiitaUrl,
+		MisskeyUrl: user.MisskeyUrl,
+	})
 }
 
 func UpdateUser(c *gin.Context) {
@@ -202,7 +243,7 @@ func ChangePassword(c *gin.Context) {
 	}
 
 	// 新しいパスワードをハッシュ化
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.NewPassword), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.NewPassword), 12)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "パスワードのハッシュ化に失敗しました"})
 		return

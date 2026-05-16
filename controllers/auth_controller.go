@@ -37,20 +37,20 @@ func Login(c *gin.Context) {
 	var user models.User
 	if err := config.DB.Where("username = ?", input.Username).First(&user).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Invalid Credentials"})
-		log.Printf("ユーザーが存在しません: %v", input.Username)
+		log.Printf("ログイン失敗 (ユーザー不在): username=%v ip=%s", input.Username, c.ClientIP())
 		return
 	}
 
 	// パスワードの検証
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Credentials"})
-		log.Printf("パスワードが一致しません: %v", input.Username)
+		log.Printf("ログイン失敗 (パスワード不一致): username=%v ip=%s", input.Username, c.ClientIP())
 		return
 	}
 
 	// JWTトークンを生成
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": user.ID,
+		"user_id": user.ID.String(),
 		// トークン有効期限を7日間に設定
 		"exp": time.Now().Add(time.Hour * 24 * 7).Unix(),
 	})
