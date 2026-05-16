@@ -13,17 +13,17 @@ func SetupRoutes(r *gin.Engine) {
 
 	public := r.Group("/api")
 	{
-		public.POST("/login", controllers.Login)
+		public.POST("/login", middlewares.LoginRateLimit(), controllers.Login)
 		public.GET("/articles", controllers.GetArticles)
 		public.GET("/articles/:id", controllers.GetArticle)
 		public.GET("/images/:filename", controllers.GetImage)
 		public.GET("/like-status/:id", controllers.GetLikeStatus)
 
 		// いいね機能をpublicに移動（fingerprintで同一性を判定）
-		public.POST("/articles/like", controllers.ToggleLike)
+		public.POST("/articles/like", middlewares.PublicRateLimit(), controllers.ToggleLike)
 
 		// アクセスカウンター（fingerprint + 日付で重複防止）
-		public.POST("/articles/pageview", controllers.RecordPageView)
+		public.POST("/articles/pageview", middlewares.PublicRateLimit(), controllers.RecordPageView)
 		public.GET("/pageview-count/:id", controllers.GetPageViewCount)
 		
 		public.GET("/users/:id", controllers.GetUser) // プロフィール表示用

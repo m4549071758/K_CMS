@@ -65,44 +65,52 @@ func executeBuild(scriptPath, action, articleID string) {
 		return
 	}
 
-	// ログ読み取り用チャネル
-	logChan := make(chan string)
-	doneChan := make(chan bool)
+	// バッファ付きチャネルでブロッキングを防止
+	logChan := make(chan string, 512)
+	doneChan := make(chan struct{}, 2)
 
 	// Stdout読み取りゴルーチン
 	go func() {
+		defer func() { doneChan <- struct{}{} }()
 		scanner := bufio.NewScanner(stdoutPipe)
+		scanner.Buffer(make([]byte, 1024*1024), 1024*1024)
 		for scanner.Scan() {
-			text := scanner.Text()
-			logChan <- text
+			select {
+			case logChan <- scanner.Text():
+			case <-ctx.Done():
+				return
+			}
 		}
-		doneChan <- true
 	}()
 
 	// Stderr読み取りゴルーチン
 	go func() {
+		defer func() { doneChan <- struct{}{} }()
 		scanner := bufio.NewScanner(stderrPipe)
+		scanner.Buffer(make([]byte, 1024*1024), 1024*1024)
 		for scanner.Scan() {
-			text := scanner.Text()
-			logChan <- text
+			select {
+			case logChan <- scanner.Text():
+			case <-ctx.Done():
+				return
+			}
 		}
-		doneChan <- true
 	}()
 
-	// ログ収集ループ
+	// 両リーダー完了後にチャネルをクローズするゴルーチン
 	go func() {
-		for text := range logChan {
-			AppendBuildLog(text)
-		}
+		<-doneChan
+		<-doneChan
+		close(logChan)
 	}()
+
+	// ログをドレインしてから Wait（logChan が close されるまでブロック）
+	for text := range logChan {
+		AppendBuildLog(text)
+	}
 
 	// コマンド完了待ち
 	waitErr := cmd.Wait()
-
-	// 読み取りゴルーチンの完了を待つ (2つ分)
-	<-doneChan
-	<-doneChan
-	close(logChan)
 
 	duration := time.Since(startTime)
 

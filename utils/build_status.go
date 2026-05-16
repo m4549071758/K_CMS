@@ -52,13 +52,17 @@ func SetBuildStart(action, articleID string) {
 	}
 }
 
+const maxBuildLogLines = 1000
+
 // AppendBuildLog はログを追加します
 func AppendBuildLog(logLine string) {
 	statusMutex.Lock()
 	defer statusMutex.Unlock()
 
-	// ログが多すぎるときのために制限を設けることも検討（例: 最新1000行）
 	currentStatus.Logs = append(currentStatus.Logs, logLine)
+	if len(currentStatus.Logs) > maxBuildLogLines {
+		currentStatus.Logs = currentStatus.Logs[len(currentStatus.Logs)-maxBuildLogLines:]
+	}
 }
 
 // SetBuildComplete はビルド完了（成功/失敗）を設定します
@@ -79,7 +83,15 @@ func GetBuildStatus() BuildStatus {
 	statusMutex.RLock()
 	defer statusMutex.RUnlock()
 
-	// スライスは参照型なのでコピーを返すのが安全だが、
-	// JSONシリアライズされるだけなので簡易的に実装
-	return currentStatus
+	logsCopy := make([]string, len(currentStatus.Logs))
+	copy(logsCopy, currentStatus.Logs)
+
+	return BuildStatus{
+		State:     currentStatus.State,
+		Logs:      logsCopy,
+		StartTime: currentStatus.StartTime,
+		EndTime:   currentStatus.EndTime,
+		Action:    currentStatus.Action,
+		ArticleID: currentStatus.ArticleID,
+	}
 }
