@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // トークン認証用のミドルウェア
@@ -26,10 +26,10 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, jwt.ErrSignatureInvalid
+				return nil, jwt.ErrTokenSignatureInvalid
 			}
 			return []byte(os.Getenv("JWT_SECRET")), nil
-		})
+		}, jwt.WithValidMethods([]string{"HS256"}))
 
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication failed."})
