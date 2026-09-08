@@ -37,9 +37,9 @@ type Article struct {
 	Tags           StringArray `gorm:"type:text;not null" json:"tags"`
 	Datetime       string      `gorm:"type:date;not null;index" json:"datetime"`
 	Content        string      `gorm:"type:longtext;not null" json:"content"`
-	SeoTitle       string      `gorm:"varchar(255);not null;default:''" json:"seo_title"`
-	SeoDescription string      `gorm:"varchar(500);not null;default:''" json:"seo_description"`
-	PrimaryKeyword string      `gorm:"varchar(255);not null;default:''" json:"primary_keyword"`
+	SeoTitle       string      `gorm:"size:255;not null;default:''" json:"seo_title"`
+	SeoDescription string      `gorm:"size:500;not null;default:''" json:"seo_description"`
+	PrimaryKeyword string      `gorm:"size:255;not null;default:''" json:"primary_keyword"`
 	LikeCount      int         `gorm:"default:0;not null" json:"like_count"`
 
 	UserID uuid.UUID `gorm:"type:char(36);not null;index" json:"user_id"`
