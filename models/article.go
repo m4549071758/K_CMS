@@ -29,15 +29,18 @@ func (sa *StringArray) Scan(value interface{}) error {
 
 type Article struct {
 	gorm.Model
-	ID            uuid.UUID   `gorm:"type:char(36);primaryKey" json:"id"`
-	Title         string      `gorm:"varchar(255);not null" json:"title"`
-	Excerpt       string      `gorm:"varchar(255);not null" json:"excerpt"`
-	CoverImageURL string      `gorm:"varchar(255);not null" json:"cover_image"`
-	OgImageURL    string      `gorm:"varchar(255);not null" json:"og_image"`
-	Tags          StringArray `gorm:"type:text;not null" json:"tags"`
-	Datetime      string      `gorm:"type:date;not null;index" json:"datetime"`
-	Content       string      `gorm:"type:longtext;not null" json:"content"`
-	LikeCount     int         `gorm:"default:0;not null" json:"like_count"`
+	ID             uuid.UUID   `gorm:"type:char(36);primaryKey" json:"id"`
+	Title          string      `gorm:"varchar(255);not null" json:"title"`
+	Excerpt        string      `gorm:"varchar(255);not null" json:"excerpt"`
+	CoverImageURL  string      `gorm:"varchar(255);not null" json:"cover_image"`
+	OgImageURL     string      `gorm:"varchar(255);not null" json:"og_image"`
+	Tags           StringArray `gorm:"type:text;not null" json:"tags"`
+	Datetime       string      `gorm:"type:date;not null;index" json:"datetime"`
+	Content        string      `gorm:"type:longtext;not null" json:"content"`
+	SeoTitle       string      `gorm:"varchar(255);not null;default:''" json:"seo_title"`
+	SeoDescription string      `gorm:"varchar(500);not null;default:''" json:"seo_description"`
+	PrimaryKeyword string      `gorm:"varchar(255);not null;default:''" json:"primary_keyword"`
+	LikeCount      int         `gorm:"default:0;not null" json:"like_count"`
 
 	UserID uuid.UUID `gorm:"type:char(36);not null;index" json:"user_id"`
 	User   User      `gorm:"foreignKey:UserID" json:"user,omitempty"`

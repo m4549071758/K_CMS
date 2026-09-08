@@ -25,9 +25,9 @@ func SetupRoutes(r *gin.Engine) {
 		// アクセスカウンター（fingerprint + 日付で重複防止）
 		public.POST("/articles/pageview", middlewares.PublicRateLimit(), controllers.RecordPageView)
 		public.GET("/pageview-count/:id", controllers.GetPageViewCount)
-		
-		public.GET("/users/:id", controllers.GetUser) // プロフィール表示用
-		public.GET("/owner", controllers.GetOwner)    // オーナープロフィール取得用（新規追加）
+
+		public.GET("/users/:id", controllers.GetUser)         // プロフィール表示用
+		public.GET("/owner", controllers.GetOwner)            // オーナープロフィール取得用（新規追加）
 		public.GET("/site-config", controllers.GetSiteConfig) // サイト設定用
 	}
 
@@ -42,6 +42,7 @@ func SetupRoutes(r *gin.Engine) {
 		protected.POST("/change-password", controllers.ChangePassword)
 
 		protected.POST("/articles/add", controllers.AddArticle)
+		protected.GET("/articles/:id/editor", controllers.GetArticleForEditor)
 		protected.PUT("/articles/:id", controllers.UpdateArticle)
 		protected.DELETE("/articles/:id", controllers.DeleteArticle)
 
