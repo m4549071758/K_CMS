@@ -9,8 +9,7 @@ LOG_PREFIX="[Frontend Build]"
 FRONTEND_DIR="/root/blog"
 BUILD_OUTPUT_DIR="/root/blog/out"
 DEPLOY_DIR="/var/www/html/blog"
-# CloudflareがHTMLを7日間キャッシュするため、旧HTMLが参照する静的assetを8日間保持する。
-STATIC_ASSET_RETENTION_MINUTES=11520
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 
 # 引数のチェック
 if [ $# -lt 2 ]; then
@@ -68,40 +67,11 @@ if [ ! -d "$BUILD_OUTPUT_DIR" ]; then
     exit 1
 fi
 
-# デプロイディレクトリが存在しない場合は作成
-if [ ! -d "$DEPLOY_DIR" ]; then
-    echo "$LOG_PREFIX Creating deploy directory: $DEPLOY_DIR"
-    mkdir -p "$DEPLOY_DIR" || {
-        echo "$LOG_PREFIX ERROR: Failed to create deploy directory"
-        exit 1
-    }
-fi
-
-# HTMLなどは完全同期するが、Cloudflareに残る旧HTMLが参照する静的assetは保持する。
 echo "$LOG_PREFIX Deploying build output to $DEPLOY_DIR..."
-mkdir -p "$DEPLOY_DIR/_next/static"
-
-if ! rsync -av "$BUILD_OUTPUT_DIR/_next/static/" "$DEPLOY_DIR/_next/static/"; then
-    echo "$LOG_PREFIX ERROR: Failed to deploy static assets"
+if ! bash "$SCRIPT_DIR/deploy_frontend.sh" "$BUILD_OUTPUT_DIR" "$DEPLOY_DIR"; then
+    echo "$LOG_PREFIX ERROR: Failed to deploy build output" >&2
     exit 1
 fi
-
-if ! rsync -av --delete --exclude '/_next/static/' "$BUILD_OUTPUT_DIR/" "$DEPLOY_DIR/"; then
-    echo "$LOG_PREFIX ERROR: Failed to deploy build output"
-    exit 1
-fi
-
-echo "$LOG_PREFIX Deployment successful"
-
-# 現行ビルドに存在せず、保持期間を過ぎた静的assetだけを削除する。
-while IFS= read -r -d '' deployed_asset; do
-    relative_path=${deployed_asset#"$DEPLOY_DIR/"}
-    if [ ! -e "$BUILD_OUTPUT_DIR/$relative_path" ]; then
-        rm -f -- "$deployed_asset"
-    fi
-done < <(find "$DEPLOY_DIR/_next/static" -type f -mmin "+$STATIC_ASSET_RETENTION_MINUTES" -print0)
-
-find "$DEPLOY_DIR/_next/static" -depth -type d -empty -delete
 
 # 所有者をnginx:nginxに変更
 echo "$LOG_PREFIX Changing ownership to nginx:nginx..."
