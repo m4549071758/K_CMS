@@ -28,6 +28,22 @@ echo "$LOG_PREFIX Article ID: $ARTICLE_ID"
 echo "$LOG_PREFIX Time: $(date '+%Y-%m-%d %H:%M:%S')"
 echo "$LOG_PREFIX ============================================"
 
+# フロントエンド用環境変数のチェック
+# NEXT_PUBLIC_* はビルド時に値が静的JSへ埋め込まれるため、未設定だと
+# フォールバック値(localhost:8080等)が本番assetに焼き込まれる
+echo "$LOG_PREFIX Checking NEXT_PUBLIC environment variables..."
+MISSING_ENV=0
+for VAR in NEXT_PUBLIC_API_BASE_URL NEXT_PUBLIC_SITE_NAME; do
+    if [ -z "${!VAR:-}" ]; then
+        echo "$LOG_PREFIX ERROR: $VAR is not set. Set it in Secret blog-cms-env before building."
+        MISSING_ENV=1
+    fi
+done
+if [ "$MISSING_ENV" -ne 0 ]; then
+    echo "$LOG_PREFIX ERROR: Refusing to build with unset NEXT_PUBLIC variables"
+    exit 1
+fi
+
 # フロントエンドディレクトリの存在確認
 if [ ! -d "$FRONTEND_DIR" ]; then
     echo "$LOG_PREFIX ERROR: Frontend directory not found: $FRONTEND_DIR"
