@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"image"
+	"log"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
@@ -10,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/chai2010/webp"
 	"github.com/gin-gonic/gin"
@@ -129,9 +131,26 @@ func GetImage(c *gin.Context) {
 	}
 
 	filePath := filepath.Join("images", fileName)
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+	info, err := os.Stat(filePath)
+	if err != nil || info.IsDir() {
 		c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
 		return
+	}
+
+	// ?w=幅 が指定されたら縮小版を返す。幅は許可リストへ丸めてキャッシュ数を抑える。
+	if rawWidth := c.Query("w"); rawWidth != "" {
+		width, err := strconv.Atoi(rawWidth)
+		if err != nil || width <= 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid width"})
+			return
+		}
+		resizedPath, err := resizedImagePath(filePath, fileName, snapWidth(width))
+		if err != nil {
+			log.Printf("Failed to resize image %s to width %d: %v", fileName, width, err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to resize image"})
+			return
+		}
+		filePath = resizedPath
 	}
 
 	// ファイル名はアップロード毎に新規IDで生成され内容が変わらないため、長期キャッシュさせる。
@@ -174,6 +193,8 @@ func DeleteImage(c *gin.Context) {
 		// ここではエラーとして返す（または警告のみにするか要検討。今回はエラーログ出しつつ続行する方針で）
 		// log.Printf("Failed to delete file: %v", err)
 	}
+
+	removeResizedImages(image.FileName)
 
 	// DBレコードの削除
 	if err := config.DB.Delete(&image).Error; err != nil {
