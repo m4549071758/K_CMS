@@ -134,6 +134,8 @@ func GetImage(c *gin.Context) {
 		return
 	}
 
+	// ファイル名はアップロード毎に新規IDで生成され内容が変わらないため、長期キャッシュさせる。
+	c.Header("Cache-Control", "public, max-age=31536000, immutable")
 	c.File(filePath)
 }
 
