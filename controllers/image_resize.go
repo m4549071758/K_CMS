@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"bytes"
 	"fmt"
 	"image"
 	"os"
@@ -22,6 +23,9 @@ var resizedCacheDir = filepath.Join("images", ".resized")
 
 const resizeQuality = 80
 
+// resizeSlots は同時に実行する縮小処理の上限。
+var resizeSlots = make(chan struct{}, 2)
+
 // snapWidth は要求幅以上で最小の許可幅を返す。範囲外は最大の許可幅に丸める。
 func snapWidth(requested int) int {
 	i := sort.SearchInts(resizeWidths, requested)
@@ -39,33 +43,42 @@ func resizedImagePath(originalPath, fileName string, width int) (string, error) 
 		return cachePath, nil
 	}
 
-	src, err := os.Open(originalPath)
+	// 大きな画像の縮小はメモリを食うため同時実行数を絞る。待機後に他リクエストが生成済みなら再利用する。
+	resizeSlots <- struct{}{}
+	defer func() { <-resizeSlots }()
+	if info, err := os.Stat(cachePath); err == nil && !info.IsDir() {
+		return cachePath, nil
+	}
+
+	data, err := os.ReadFile(originalPath)
 	if err != nil {
 		return "", err
 	}
-	defer src.Close()
-
-	cfg, _, err := image.DecodeConfig(src)
+	cfg, format, err := image.DecodeConfig(bytes.NewReader(data))
 	if err != nil {
 		return "", fmt.Errorf("decode config: %w", err)
 	}
 	if cfg.Width <= width {
 		return originalPath, nil
 	}
-	if _, err := src.Seek(0, 0); err != nil {
-		return "", err
-	}
-	img, _, err := image.Decode(src)
-	if err != nil {
-		return "", fmt.Errorf("decode: %w", err)
-	}
+	height := max(cfg.Height*width/cfg.Width, 1)
 
-	height := cfg.Height * width / cfg.Width
-	if height < 1 {
-		height = 1
+	var dst image.Image
+	if format == "webp" {
+		// libwebpのスケーリングデコードで目的サイズへ直接展開し、元サイズのピクセルを確保しない。
+		dst, err = webp.DecodeRGBAToSize(data, width, height)
+		if err != nil {
+			return "", fmt.Errorf("decode webp to size: %w", err)
+		}
+	} else {
+		img, _, err := image.Decode(bytes.NewReader(data))
+		if err != nil {
+			return "", fmt.Errorf("decode: %w", err)
+		}
+		scaled := image.NewRGBA(image.Rect(0, 0, width, height))
+		draw.CatmullRom.Scale(scaled, scaled.Bounds(), img, img.Bounds(), draw.Src, nil)
+		dst = scaled
 	}
-	dst := image.NewRGBA(image.Rect(0, 0, width, height))
-	draw.CatmullRom.Scale(dst, dst.Bounds(), img, img.Bounds(), draw.Src, nil)
 
 	if err := os.MkdirAll(filepath.Dir(cachePath), 0o755); err != nil {
 		return "", err
